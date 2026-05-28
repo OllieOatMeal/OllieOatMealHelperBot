@@ -5,11 +5,12 @@
 import discord
 from discord.ext import commands
 
-import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")  # ← Paste your bot token here
+
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 # ── Intents ───────────────────────────────────────────────────────────────────
 intents = discord.Intents.all()
