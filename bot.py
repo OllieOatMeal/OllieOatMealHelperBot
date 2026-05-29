@@ -24,7 +24,14 @@ async def on_ready():
     print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
     print("─" * 40)
 
-    cogs = ["cogs.logging", "cogs.moderation", "cogs.reaction_roles", "cogs.embeds"]
+    cogs = [
+        "cogs.logging",
+        "cogs.moderation",
+        "cogs.reaction_roles",
+        "cogs.embeds",
+        "cogs.tickets",       # Ticket system
+        "cogs.applications",  # Application system
+    ]
     for cog in cogs:
         try:
             await bot.load_extension(cog)

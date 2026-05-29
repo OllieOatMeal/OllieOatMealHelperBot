@@ -2,11 +2,9 @@
 # config.py — Bot configuration and role permission system
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# HOW TO GET A ROLE ID:
+# HOW TO GET A ROLE / CHANNEL ID:
 #   1. Enable Developer Mode: User Settings → Advanced → Developer Mode
-#   2. Go to Server Settings → Roles
-#   3. Right-click a role → Copy Role ID
-#   4. Paste it below
+#   2. Right-click a role or channel → Copy ID
 
 import discord
 from discord import app_commands
@@ -16,9 +14,21 @@ ADMIN_ROLE_ID     = 1117190624853110925  # Full access to all commands
 MODERATOR_ROLE_ID = 1117190992316076082  # Access to most mod commands
 HELPER_ROLE_ID    = 1117191230485438584  # Access to basic commands (warn, purge)
 
-# ── Log channel ───────────────────────────────────────────────────────────────
-LOG_CHANNEL_NAME = "logs"   # Name of your log channel
-LOG_CHANNEL_ID   = 1117368916528865413     # Or set a specific channel ID (int) to override name
+# ── Log channels ──────────────────────────────────────────────────────────────
+LOG_CHANNEL_NAME     = "logs"            # General event log channel name
+LOG_CHANNEL_ID       = 1117368916528865413  # General log channel ID (overrides name)
+
+MOD_LOG_CHANNEL_NAME = "mod-logs"        # Moderation action log channel name
+MOD_LOG_CHANNEL_ID   = 0                 # Set to your #mod-logs channel ID (int), or leave 0 to use name
+
+# ── Ticket system ─────────────────────────────────────────────────────────────
+TICKET_CATEGORY_NAME    = "Tickets"      # Category where ticket channels are created
+TICKET_LOG_CHANNEL_NAME = "mod-logs"     # Channel to log ticket open/close events
+TICKET_SUPPORT_ROLE_ID  = MODERATOR_ROLE_ID  # Role that can see & manage tickets
+
+# ── Application system ────────────────────────────────────────────────────────
+APPLICATION_LOG_CHANNEL_NAME = "mod-logs"  # Channel where completed applications are posted
+APPLICATION_PING_ROLE_ID     = ADMIN_ROLE_ID  # Role pinged when a new application arrives
 
 # ── Reusable role check ───────────────────────────────────────────────────────
 def has_any_role(*role_ids: int):
