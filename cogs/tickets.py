@@ -23,9 +23,8 @@ from datetime import datetime, timezone
 
 from config import (
     has_any_role,
-    ADMIN_ROLE_ID, MODERATOR_ROLE_ID,
     TICKET_CATEGORY_NAME, TICKET_LOG_CHANNEL_NAME, TICKET_SUPPORT_ROLE_ID,
-    MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME,
+    MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME, HEAD_ADMIN_ROLE_ID
 )
 
 # ── Ticket counter (resets on restart — swap for a DB/JSON file for persistence) ──
@@ -42,8 +41,6 @@ def next_ticket_number(guild_id: int) -> int:
 # ════════════════════════════════════════════════════════════════════════════
 
 async def _get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
-    if MOD_LOG_CHANNEL_ID:
-        return guild.get_channel(MOD_LOG_CHANNEL_ID)
     return discord.utils.get(guild.text_channels, name=TICKET_LOG_CHANNEL_NAME)
 
 
@@ -63,7 +60,7 @@ async def _send_ticket_log(guild, *, colour, title, fields, thumbnail=None):
 
 
 def _is_staff(member: discord.Member) -> bool:
-    return any(r.id in (ADMIN_ROLE_ID, MODERATOR_ROLE_ID, TICKET_SUPPORT_ROLE_ID) for r in member.roles)
+    return any(r.id in (TICKET_SUPPORT_ROLE_ID) for r in member.roles)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -291,7 +288,7 @@ class Tickets(commands.Cog):
         bot.add_view(TicketControlView())
 
     @app_commands.command(name="basic-ticket-panel", description="Post the basic ticket creation panel in this channel")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 Support Tickets",
@@ -310,7 +307,7 @@ class Tickets(commands.Cog):
         await interaction.response.send_message("✅ Ticket panel posted.", ephemeral=True)
     
     @app_commands.command(name="cc-ticket-panel", description="Post the content creator ticket creation panel in this channel")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎥 Content Creator Tickets",
@@ -329,7 +326,7 @@ class Tickets(commands.Cog):
         await interaction.response.send_message("✅ Ticket panel posted.", ephemeral=True)
 
     @app_commands.command(name="ticket-close", description="Force-close the current ticket channel")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(TICKET_SUPPORT_ROLE_ID)
     async def ticket_close(self, interaction: discord.Interaction):
         if not interaction.channel.name.startswith("ticket-"):
             return await interaction.response.send_message(

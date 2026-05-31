@@ -28,7 +28,8 @@ from datetime import datetime, timezone
 from config import (
     has_any_role,
     ADMIN_ROLE_ID, MODERATOR_ROLE_ID,
-    APPLICATION_LOG_CHANNEL_NAME, APPLICATION_PING_ROLE_ID,
+    MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID, 
+    STAFF_APPLICATION_LOG_CHANNEL_NAME, STAFF_APPLICATION_PING_ROLE_ID,
     MOD_LOG_CHANNEL_ID,
 )
 
@@ -36,7 +37,7 @@ from config import (
 # ✏️  APPLICATIONS — Edit this list to add, remove, or change forms
 # ════════════════════════════════════════════════════════════════════════════
 
-APPLICATIONS: list[dict] = [
+MEMBER_APPLICATIONS: list[dict] = [
     {
         # ── Staff Application ─────────────────────────────────────────────
         "id":    "staff",           # Unique ID — do NOT change after deploying (used in custom_ids)
@@ -112,31 +113,63 @@ APPLICATIONS: list[dict] = [
         ],
     },
     {
-        # ── Event Host Application ────────────────────────────────────────
-        "id":    "event_host",
-        "label": "Event Host",
-        "emoji": "🎉",
+        # ── Content Creator Application ─────────────────────────────────────
+        "id":    "content_creator",
+        "label": "Content Creator",
+        "emoji": "🎥",
         "colour": 0xF39C12,
         "questions": [
             {
-                "label":       "What type of events would you host?",
-                "placeholder": "e.g. game nights, trivia, giveaways…",
+                "label":       "What content do you produce?",
+                "placeholder": "e.g. tiktoks, youtube videos, streams...",
                 "style":       "paragraph",
                 "required":    True,
                 "max_length":  300,
             },
             {
-                "label":       "How often could you host events?",
+                "label":       "How often would you post?",
                 "placeholder": "e.g. Once a week",
                 "style":       "short",
                 "required":    True,
                 "max_length":  80,
             },
             {
-                "label":       "Describe a past event you organised (if any).",
-                "placeholder": "Optional…",
+                "label":       "Send a link to something you made which was received well...",
+                "placeholder": "e.g. Tiktok or YouTube link",
+                "style":       "short",
+                "required":    True,
+                "max_length":  100,
+            },
+        ],
+    },
+]
+STAFF_APPLICATIONS: list[dict] = [
+    {
+        # ── Staff Promotion Application ─────────────────────────────────────
+        "id":    "staff_promotion",
+        "label": "Staff Promotion Application",
+        "emoji": "🛡️",
+        "colour": 0xF39C12,
+        "questions": [
+            {
+                "label":       "Why should you be promoted?",
+                "placeholder": "",
                 "style":       "paragraph",
-                "required":    False,
+                "required":    True,
+                "max_length":  400,
+            },
+            {
+                "label":       "How active a week are you?",
+                "placeholder": "e.g. 10 hours a week",
+                "style":       "short",
+                "required":    True,
+                "max_length":  80,
+            },
+            {
+                "label":       "What would you bring to the Senior Team?",
+                "placeholder": "",
+                "style":       "paragraph",
+                "required":    True,
                 "max_length":  400,
             },
         ],
@@ -148,11 +181,18 @@ APPLICATIONS: list[dict] = [
 # ════════════════════════════════════════════════════════════════════════════
 
 def _get_app_config(app_id: str) -> dict | None:
-    return next((a for a in APPLICATIONS if a["id"] == app_id), None)
+    return next((a for a in MEMBER_APPLICATIONS if a["id"] == app_id), None)
 
 
 async def _get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
-    return discord.utils.get(guild.text_channels, name=APPLICATION_LOG_CHANNEL_NAME)
+    return discord.utils.get(guild.text_channels, name=MEMBER_APPLICATION_LOG_CHANNEL_NAME)
+
+def _get_app_config(app_id: str) -> dict | None:
+    return next((a for a in STAFF_APPLICATIONS if a["id"] == app_id), None)
+
+
+async def _get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
+    return discord.utils.get(guild.text_channels, name=STAFF_APPLICATION_LOG_CHANNEL_NAME)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -206,7 +246,7 @@ def build_modal(app_config: dict, applicant: discord.Member) -> discord.ui.Modal
                 return
 
             # Ping role if configured
-            ping_role = interaction.guild.get_role(APPLICATION_PING_ROLE_ID)
+            ping_role = interaction.guild.get_role(MEMBER_APPLICATION_PING_ROLE_ID)
             ping_content = ping_role.mention if ping_role else ""
 
             app_msg = await log_ch.send(
@@ -310,12 +350,36 @@ class ApplicationReviewView(discord.ui.View):
 # Panel View
 # ════════════════════════════════════════════════════════════════════════════
 
-class ApplicationPanelView(discord.ui.View):
+class MemberApplicationPanelView(discord.ui.View):
     """One button per application type. Posted by /application-panel."""
 
     def __init__(self):
         super().__init__(timeout=None)
-        for app in APPLICATIONS:
+        for app in MEMBER_APPLICATIONS:
+            btn = discord.ui.Button(
+                label=app["label"],
+                emoji=app["emoji"],
+                style=discord.ButtonStyle.primary,
+                custom_id=f"app:open:{app['id']}",
+            )
+            btn.callback = self._make_callback(app["id"])
+            self.add_item(btn)
+
+    def _make_callback(self, app_id: str):
+        async def callback(interaction: discord.Interaction):
+            cfg = _get_app_config(app_id)
+            if not cfg:
+                return await interaction.response.send_message("❌ Application type not found.", ephemeral=True)
+            modal = build_modal(cfg, interaction.user)
+            await interaction.response.send_modal(modal)
+        return callback
+
+class StaffApplicationPanelView(discord.ui.View):
+    """One button per application type. Posted by /application-panel."""
+
+    def __init__(self):
+        super().__init__(timeout=None)
+        for app in MEMBER_APPLICATIONS:
             btn = discord.ui.Button(
                 label=app["label"],
                 emoji=app["emoji"],
@@ -339,15 +403,15 @@ class ApplicationPanelView(discord.ui.View):
 # Cog
 # ════════════════════════════════════════════════════════════════════════════
 
-class Applications(commands.Cog):
+class MemberApplications(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        bot.add_view(ApplicationPanelView())
+        bot.add_view(MemberApplicationPanelView())
 
-    @app_commands.command(name="application-panel", description="Post the application panel in this channel")
+    @app_commands.command(name="member-application-panel", description="Post the application panel in this channel")
     @has_any_role(ADMIN_ROLE_ID)
     async def application_panel(self, interaction: discord.Interaction):
-        types_list = "\n".join(f"{a['emoji']} **{a['label']}**" for a in APPLICATIONS)
+        types_list = "\n".join(f"{a['emoji']} **{a['label']}**" for a in MEMBER_APPLICATIONS)
         embed = discord.Embed(
             title="📋 Server Applications",
             description=(
@@ -360,7 +424,7 @@ class Applications(commands.Cog):
         if interaction.guild.icon:
             embed.set_thumbnail(url=interaction.guild.icon.url)
 
-        await interaction.channel.send(embed=embed, view=ApplicationPanelView())
+        await interaction.channel.send(embed=embed, view=MemberApplicationPanelView())
         await interaction.response.send_message("✅ Application panel posted.", ephemeral=True)
 
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
@@ -371,4 +435,38 @@ class Applications(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Applications(bot))
+    await bot.add_cog(MemberApplications(bot))
+
+class StaffApplications(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+        bot.add_view(MemberApplicationPanelView())
+
+    @app_commands.command(name="staff-application-panel", description="Post the application panel in this channel")
+    @has_any_role(ADMIN_ROLE_ID)
+    async def application_panel(self, interaction: discord.Interaction):
+        types_list = "\n".join(f"{a['emoji']} **{a['label']}**" for a in STAFF_APPLICATIONS)
+        embed = discord.Embed(
+            title="📋 Server Applications",
+            description=(
+                "Interested in joining the team? Click the button for the role you'd like to apply for!\n\n"
+                f"{types_list}"
+            ),
+            colour=0x5865F2,
+        )
+        embed.set_footer(text=f"{interaction.guild.name} • Applications")
+        if interaction.guild.icon:
+            embed.set_thumbnail(url=interaction.guild.icon.url)
+
+        await interaction.channel.send(embed=embed, view=StaffApplicationPanelView())
+        await interaction.response.send_message("✅ Application panel posted.", ephemeral=True)
+
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            await interaction.response.send_message("❌ You don't have the required role.", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"❌ An error occurred: {error}", ephemeral=True)
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(StaffApplications(bot))

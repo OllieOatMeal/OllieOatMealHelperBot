@@ -15,7 +15,8 @@ from collections import defaultdict
 import re
 from config import (
     has_any_role,
-    ADMIN_ROLE_ID, MODERATOR_ROLE_ID, HELPER_ROLE_ID,
+    OWNER_ROLE_ID, HEAD_ADMIN_ROLE_ID, ADMIN_ROLE_ID, 
+    ADMIN_ROLE_ID, STAFF_ROLE_ID,
     MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME,
 )
 
@@ -67,7 +68,7 @@ class Moderation(commands.Cog):
     # ── /ban ──────────────────────────────────────────────────────────────────
     @app_commands.command(name="ban", description="Ban a member from the server")
     @app_commands.describe(member="Member to ban", reason="Reason for the ban", delete_days="Days of messages to delete (0–7)")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def ban(
         self,
         interaction: discord.Interaction,
@@ -99,7 +100,7 @@ class Moderation(commands.Cog):
     # ── /unban ────────────────────────────────────────────────────────────────
     @app_commands.command(name="unban", description="Unban a user by their ID")
     @app_commands.describe(user_id="The user's ID to unban", reason="Reason for unban")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def unban(self, interaction: discord.Interaction, user_id: str, reason: str = "No reason provided"):
         try:
             uid = int(user_id)
@@ -124,7 +125,7 @@ class Moderation(commands.Cog):
     # ── /kick ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="kick", description="Kick a member from the server")
     @app_commands.describe(member="Member to kick", reason="Reason for the kick")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID)
     async def kick(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
         if member.top_role >= interaction.user.top_role:
             return await interaction.response.send_message(
@@ -150,7 +151,7 @@ class Moderation(commands.Cog):
     # ── /mute ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="mute", description="Timeout a member (e.g. 10m, 2h, 1d)")
     @app_commands.describe(member="Member to mute", duration="Duration e.g. 10m, 2h, 1d (max 28d)", reason="Reason for the mute")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID)
     async def mute(self, interaction: discord.Interaction, member: discord.Member, duration: str, reason: str = "No reason provided"):
         delta = parse_duration(duration)
         if not delta:
@@ -174,7 +175,7 @@ class Moderation(commands.Cog):
     # ── /unmute ───────────────────────────────────────────────────────────────
     @app_commands.command(name="unmute", description="Remove timeout from a member")
     @app_commands.describe(member="Member to unmute")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def unmute(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
         await member.timeout(None, reason=f"{interaction.user} | {reason}")
         fields = [
@@ -190,7 +191,7 @@ class Moderation(commands.Cog):
     # ── /warn ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="warn", description="Issue a warning to a member")
     @app_commands.describe(member="Member to warn", reason="Reason for the warning")
-    @has_any_role(HELPER_ROLE_ID, MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID)
     async def warn(self, interaction: discord.Interaction, member: discord.Member, reason: str):
         warnings[interaction.guild.id][member.id].append(reason)
         count = len(warnings[interaction.guild.id][member.id])
@@ -217,7 +218,7 @@ class Moderation(commands.Cog):
     # ── /warnings ─────────────────────────────────────────────────────────────
     @app_commands.command(name="warnings", description="View a member's warnings")
     @app_commands.describe(member="Member to check")
-    @has_any_role(HELPER_ROLE_ID, MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID)
     async def view_warnings(self, interaction: discord.Interaction, member: discord.Member):
         user_warns = warnings[interaction.guild.id][member.id]
         embed = discord.Embed(title=f"⚠️ Warnings for {member}", colour=0xF39C12)
@@ -231,7 +232,7 @@ class Moderation(commands.Cog):
     # ── /clearwarns ───────────────────────────────────────────────────────────
     @app_commands.command(name="clearwarns", description="Clear all warnings for a member")
     @app_commands.describe(member="Member to clear warnings for")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def clear_warnings(self, interaction: discord.Interaction, member: discord.Member):
         warnings[interaction.guild.id][member.id].clear()
         await interaction.response.send_message(f"✅ Cleared all warnings for {member.mention}.", ephemeral=True)
@@ -246,7 +247,7 @@ class Moderation(commands.Cog):
     # ── /purge ────────────────────────────────────────────────────────────────
     @app_commands.command(name="purge", description="Bulk delete messages in this channel")
     @app_commands.describe(amount="Number of messages to delete (1–500)", user="Only delete messages from this user (optional)")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def purge(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 500], user: discord.Member = None):
         await interaction.response.defer(ephemeral=True)
         def check(m: discord.Message):
@@ -269,7 +270,7 @@ class Moderation(commands.Cog):
     # ── /lock ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="lock", description="Lock this channel so @everyone cannot send messages")
     @app_commands.describe(reason="Reason for the lock")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def lock(self, interaction: discord.Interaction, reason: str = "No reason provided"):
         overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
         overwrite.send_messages = False
@@ -291,7 +292,7 @@ class Moderation(commands.Cog):
 
     # ── /unlock ───────────────────────────────────────────────────────────────
     @app_commands.command(name="unlock", description="Unlock this channel")
-    @has_any_role(ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def unlock(self, interaction: discord.Interaction):
         overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
         overwrite.send_messages = None
@@ -313,7 +314,7 @@ class Moderation(commands.Cog):
     # ── /slowmode ─────────────────────────────────────────────────────────────
     @app_commands.command(name="slowmode", description="Set slowmode for this channel")
     @app_commands.describe(seconds="Slowmode in seconds (0 to disable, max 21600)")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def slowmode(self, interaction: discord.Interaction, seconds: app_commands.Range[int, 0, 21600]):
         await interaction.channel.edit(slowmode_delay=seconds)
         msg = "✅ Slowmode disabled." if seconds == 0 else f"✅ Slowmode set to **{seconds}s**."
@@ -330,7 +331,7 @@ class Moderation(commands.Cog):
     # ── /nick ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="nick", description="Change a member's nickname")
     @app_commands.describe(member="Member to rename", nickname="New nickname (leave empty to reset)")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID)
     async def nick(self, interaction: discord.Interaction, member: discord.Member, nickname: str = None):
         old_nick = member.nick or member.name
         await member.edit(nick=nickname)

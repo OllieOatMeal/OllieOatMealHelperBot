@@ -11,7 +11,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from config import has_any_role, MODERATOR_ROLE_ID, ADMIN_ROLE_ID
+from config import has_any_role, OWNER_ROLE_ID
 
 # reaction_roles_db[guild_id][(message_id, emoji_str)] = role_id
 RRKey = tuple[int, str]
@@ -37,7 +37,7 @@ class ReactionRoles(commands.Cog):
         emoji="Emoji to react with",
         role="Role to assign",
     )
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(OWNER_ROLE_ID)
     async def rr_add(
         self,
         interaction: discord.Interaction,
@@ -82,7 +82,7 @@ class ReactionRoles(commands.Cog):
         role="Role to assign when user reacts",
         colour="Hex colour for the embed (e.g. ff5733)",
     )
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(OWNER_ROLE_ID)
     async def rr_create(
         self,
         interaction: discord.Interaction,
@@ -122,7 +122,7 @@ class ReactionRoles(commands.Cog):
     # ── /reactionrole remove ──────────────────────────────────────────────────
     @rr_group.command(name="remove", description="Remove a reaction role entry")
     @app_commands.describe(message_id="ID of the message", emoji="Emoji of the reaction role to remove")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(OWNER_ROLE_ID)
     async def rr_remove(self, interaction: discord.Interaction, message_id: str, emoji: str):
         try:
             mid = int(message_id)
@@ -140,7 +140,7 @@ class ReactionRoles(commands.Cog):
 
     # ── /reactionrole list ────────────────────────────────────────────────────
     @rr_group.command(name="list", description="List all active reaction roles in this server")
-    @has_any_role(MODERATOR_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(OWNER_ROLE_ID)
     async def rr_list(self, interaction: discord.Interaction):
         db = self._get_db(interaction.guild.id)
         if not db:
