@@ -152,8 +152,6 @@ def _get_app_config(app_id: str) -> dict | None:
 
 
 async def _get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
-    if MOD_LOG_CHANNEL_ID:
-        return guild.get_channel(MOD_LOG_CHANNEL_ID)
     return discord.utils.get(guild.text_channels, name=APPLICATION_LOG_CHANNEL_NAME)
 
 

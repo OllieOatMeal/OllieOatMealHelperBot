@@ -28,7 +28,7 @@ TICKET_LOG_CHANNEL_NAME = "mod-logs"     # Channel to log ticket open/close even
 TICKET_SUPPORT_ROLE_ID  = MODERATOR_ROLE_ID  # Role that can see & manage tickets
 
 # ── Application system ────────────────────────────────────────────────────────
-APPLICATION_LOG_CHANNEL_NAME = "mod-logs"  # Channel where completed applications are posted
+APPLICATION_LOG_CHANNEL_NAME = "application-logs"  # Channel where completed applications are posted
 APPLICATION_PING_ROLE_ID     = ADMIN_ROLE_ID  # Role pinged when a new application arrives
 
 # ── Reusable role check ───────────────────────────────────────────────────────
