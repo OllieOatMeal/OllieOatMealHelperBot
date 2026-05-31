@@ -10,6 +10,7 @@ import discord
 from discord import app_commands
 
 # ── Role IDs ──────────────────────────────────────────────────────────────────
+OWNER_ROLE_ID     = 1117190277522804826  # Full access to all commands
 ADMIN_ROLE_ID     = 1117190624853110925  # Full access to all commands
 MODERATOR_ROLE_ID = 1117190992316076082  # Access to most mod commands
 HELPER_ROLE_ID    = 1117191230485438584  # Access to basic commands (warn, purge)
@@ -19,7 +20,7 @@ LOG_CHANNEL_NAME     = "logs"            # General event log channel name
 LOG_CHANNEL_ID       = 1117368916528865413  # General log channel ID (overrides name)
 
 MOD_LOG_CHANNEL_NAME = "mod-logs"        # Moderation action log channel name
-MOD_LOG_CHANNEL_ID   = 0                 # Set to your #mod-logs channel ID (int), or leave 0 to use name
+MOD_LOG_CHANNEL_ID   = 1117369107898179644  # Set to your #mod-logs channel ID (int), or leave 0 to use name
 
 # ── Ticket system ─────────────────────────────────────────────────────────────
 TICKET_CATEGORY_NAME    = "Tickets"      # Category where ticket channels are created
