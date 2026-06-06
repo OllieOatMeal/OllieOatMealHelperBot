@@ -145,6 +145,7 @@ class MusicView(discord.ui.View):
         except Exception as e:
             print(f"[music] button refresh error: {e}")
 
+    # Row 0: ⏮ ⏯ ⏭ 🔀 🔁  (5 max)
     @discord.ui.button(emoji="⏮", style=discord.ButtonStyle.secondary, custom_id="music:prev", row=0)
     async def btn_prev(self, interaction: discord.Interaction, button: discord.ui.Button):
         vc = interaction.guild.voice_client
@@ -186,7 +187,8 @@ class MusicView(discord.ui.View):
         button.style = discord.ButtonStyle.success if state.loop else discord.ButtonStyle.secondary
         await self._refresh(interaction)
 
-    @discord.ui.button(emoji="⏹", style=discord.ButtonStyle.danger, custom_id="music:stop", row=0)
+    # Row 1: ⏹ Vol− Vol+ Queue  (4)
+    @discord.ui.button(emoji="⏹", style=discord.ButtonStyle.danger, custom_id="music:stop", row=1)
     async def btn_stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         state = self._state(interaction)
         state.queue.clear()
