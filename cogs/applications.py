@@ -112,37 +112,8 @@ MEMBER_APPLICATIONS: list[dict] = [
             },
         ],
     },
-    {
-        # ── Content Creator Application ─────────────────────────────────────
-        "id":    "content_creator",
-        "label": "Content Creator",
-        "emoji": "🎥",
-        "colour": 0xF39C12,
-        "questions": [
-            {
-                "label":       "What content do you produce?",
-                "placeholder": "e.g. tiktoks, youtube videos, streams...",
-                "style":       "paragraph",
-                "required":    True,
-                "max_length":  300,
-            },
-            {
-                "label":       "How often would you post?",
-                "placeholder": "e.g. Once a week",
-                "style":       "short",
-                "required":    True,
-                "max_length":  80,
-            },
-            {
-                "label":       "Send a link to something you made which was received well...",
-                "placeholder": "e.g. Tiktok or YouTube link",
-                "style":       "short",
-                "required":    True,
-                "max_length":  100,
-            },
-        ],
-    },
 ]
+
 STAFF_APPLICATIONS: list[dict] = [
     {
         # ── Staff Promotion Application ─────────────────────────────────────
@@ -286,7 +257,7 @@ class ApplicationReviewView(discord.ui.View):
         self.applicant = applicant
 
     def _staff_only(self, interaction: discord.Interaction) -> bool:
-        return any(r.id in (ADMIN_ROLE_ID, MODERATOR_ROLE_ID) for r in interaction.user.roles)
+        return any(r.id in (ADMIN_ROLE_ID) for r in interaction.user.roles)
 
     async def _update(self, interaction: discord.Interaction, status: str, colour: int, dm_text: str):
         if not self._staff_only(interaction):

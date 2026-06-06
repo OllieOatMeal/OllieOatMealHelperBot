@@ -1,6 +1,4 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# bot.py — Entry point
-# ══════════════════════════════════════════════════════════════════════════════
+# bot.py
 
 import os
 import discord
@@ -26,14 +24,12 @@ async def on_ready():
     print("─" * 40)
 
     try:
-        guild = discord.Object(id=1117187705319723133)
-
-        synced = await bot.tree.sync(guild=guild)
+        synced = await bot.tree.sync()
 
         print(f"\n⚡ Synced {len(synced)} slash command(s)")
 
         print("\nRegistered commands:")
-        for cmd in bot.tree.get_commands(guild=guild):
+        for cmd in bot.tree.get_commands():
             print(f" - {cmd.name}")
 
     except Exception as e:
@@ -77,3 +73,4 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+

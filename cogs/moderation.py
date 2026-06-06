@@ -151,7 +151,7 @@ class Moderation(commands.Cog):
     # ── /mute ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="mute", description="Timeout a member (e.g. 10m, 2h, 1d)")
     @app_commands.describe(member="Member to mute", duration="Duration e.g. 10m, 2h, 1d (max 28d)", reason="Reason for the mute")
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID)
     async def mute(self, interaction: discord.Interaction, member: discord.Member, duration: str, reason: str = "No reason provided"):
         delta = parse_duration(duration)
         if not delta:
