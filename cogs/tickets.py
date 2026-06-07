@@ -1,19 +1,3 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# cogs/tickets.py — Ticket system with embeds and buttons
-# ══════════════════════════════════════════════════════════════════════════════
-#
-# HOW IT WORKS:
-#   1. A moderator runs /ticket-panel in any channel to post the open-a-ticket embed.
-#   2. Users click "Open Ticket" — a private channel is created under the ticket category.
-#   3. Inside the ticket, a control panel embed shows Close / Claim / Add User buttons.
-#   4. On close, a plaintext transcript is saved and posted to #mod-logs,
-#      then the channel is deleted after a short delay.
-#
-# SETUP (in config.py):
-#   TICKET_CATEGORY_NAME    — name of the category tickets are created under
-#   TICKET_LOG_CHANNEL_NAME — channel where transcripts & events are logged (mod-logs)
-#   TICKET_SUPPORT_ROLE_ID  — role that can always see and manage ticket channels
-
 import asyncio
 import io
 import discord
@@ -21,13 +5,13 @@ from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timezone
 
+from cogs.blacklist import is_blacklisted
 from config import (
     has_any_role,
     TICKET_CATEGORY_NAME, TICKET_LOG_CHANNEL_NAME, TICKET_SUPPORT_ROLE_ID,
     MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME, HEAD_ADMIN_ROLE_ID
 )
 
-# ── Ticket counter (resets on restart — swap for a DB/JSON file for persistence) ──
 _ticket_counter: dict[int, int] = {}
 
 
@@ -35,10 +19,6 @@ def next_ticket_number(guild_id: int) -> int:
     _ticket_counter[guild_id] = _ticket_counter.get(guild_id, 0) + 1
     return _ticket_counter[guild_id]
 
-
-# ════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ════════════════════════════════════════════════════════════════════════════
 
 async def _get_log_channel(guild: discord.Guild) -> discord.TextChannel | None:
     return discord.utils.get(guild.text_channels, name=TICKET_LOG_CHANNEL_NAME)
@@ -63,10 +43,6 @@ def _is_staff(member: discord.Member) -> bool:
     return any(r.id in (TICKET_SUPPORT_ROLE_ID) for r in member.roles)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# Views / Modals
-# ════════════════════════════════════════════════════════════════════════════
-
 class OpenTicketView(discord.ui.View):
     """Persistent view posted by /ticket-panel."""
 
@@ -83,7 +59,11 @@ class OpenTicketView(discord.ui.View):
         guild = interaction.guild
         member = interaction.user
 
-        # Prevent duplicate tickets
+        if await is_blacklisted(member.id, "tickets"):
+            return await interaction.response.send_message(
+                "🚫 You are blacklisted from opening tickets.", ephemeral=True
+            )
+
         existing = discord.utils.find(
             lambda c: c.name.startswith("ticket-") and str(member.id) in (c.topic or ""),
             guild.text_channels,
@@ -178,7 +158,6 @@ class TicketControlView(discord.ui.View):
             )
         )
 
-        # Build transcript
         lines = [
             f"Transcript: {channel.name}",
             f"Closed by:  {interaction.user} ({interaction.user.id})",
@@ -275,11 +254,6 @@ class AddUserModal(discord.ui.Modal, title="Add User to Ticket"):
                 colour=0x5865F2,
             )
         )
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# Cog
-# ════════════════════════════════════════════════════════════════════════════
 
 class Tickets(commands.Cog):
     def __init__(self, bot: commands.Bot):

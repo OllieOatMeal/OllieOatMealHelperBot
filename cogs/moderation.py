@@ -1,12 +1,3 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# cogs/moderation.py — Full moderation system with #mod-logs posting
-# ══════════════════════════════════════════════════════════════════════════════
-#
-# All commands use role ID checks from config.py:
-#   Admin only     : /unban, /clearwarns, /lock, /unlock
-#   Mod or Admin   : /ban, /kick, /mute, /unmute, /slowmode, /nick, /purge
-#   Helper+        : /warn, /warnings
-
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -20,7 +11,6 @@ from config import (
     MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME,
 )
 
-# In-memory warning store: {guild_id: {user_id: [reason, ...]}}
 warnings: dict[int, dict[int, list[str]]] = defaultdict(lambda: defaultdict(list))
 
 
@@ -38,7 +28,6 @@ class Moderation(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    # ── Mod-log helper ────────────────────────────────────────────────────────
     async def send_mod_log(
         self,
         guild: discord.Guild,
@@ -65,7 +54,6 @@ class Moderation(commands.Cog):
         except discord.Forbidden:
             pass
 
-    # ── /ban ──────────────────────────────────────────────────────────────────
     @app_commands.command(name="ban", description="Ban a member from the server")
     @app_commands.describe(member="Member to ban", reason="Reason for the ban", delete_days="Days of messages to delete (0–7)")
     @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -97,7 +85,6 @@ class Moderation(commands.Cog):
         await self.send_mod_log(interaction.guild, colour=0x8B0000, title="🔨 Member Banned",
                                 fields=fields, thumbnail_url=member.display_avatar.url)
 
-    # ── /unban ────────────────────────────────────────────────────────────────
     @app_commands.command(name="unban", description="Unban a user by their ID")
     @app_commands.describe(user_id="The user's ID to unban", reason="Reason for unban")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -122,7 +109,6 @@ class Moderation(commands.Cog):
         except discord.NotFound:
             await interaction.response.send_message("❌ That user is not banned.", ephemeral=True)
 
-    # ── /kick ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="kick", description="Kick a member from the server")
     @app_commands.describe(member="Member to kick", reason="Reason for the kick")
     @has_any_role(STAFF_ROLE_ID)
@@ -148,7 +134,6 @@ class Moderation(commands.Cog):
         await self.send_mod_log(interaction.guild, colour=0xFF6B6B, title="👢 Member Kicked",
                                 fields=fields, thumbnail_url=member.display_avatar.url)
 
-    # ── /mute ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="mute", description="Timeout a member (e.g. 10m, 2h, 1d)")
     @app_commands.describe(member="Member to mute", duration="Duration e.g. 10m, 2h, 1d (max 28d)", reason="Reason for the mute")
     @has_any_role(STAFF_ROLE_ID)
@@ -172,7 +157,6 @@ class Moderation(commands.Cog):
         await self.send_mod_log(interaction.guild, colour=0xF39C12, title="🔇 Member Muted",
                                 fields=fields, thumbnail_url=member.display_avatar.url)
 
-    # ── /unmute ───────────────────────────────────────────────────────────────
     @app_commands.command(name="unmute", description="Remove timeout from a member")
     @app_commands.describe(member="Member to unmute")
     @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -188,7 +172,6 @@ class Moderation(commands.Cog):
         await interaction.response.send_message(embed=embed)
         await self.send_mod_log(interaction.guild, colour=0x2ECC71, title="🔊 Member Unmuted", fields=fields)
 
-    # ── /warn ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="warn", description="Issue a warning to a member")
     @app_commands.describe(member="Member to warn", reason="Reason for the warning")
     @has_any_role(STAFF_ROLE_ID)
@@ -215,7 +198,6 @@ class Moderation(commands.Cog):
         await self.send_mod_log(interaction.guild, colour=0xF39C12, title="⚠️ Warning Issued",
                                 fields=fields, thumbnail_url=member.display_avatar.url)
 
-    # ── /warnings ─────────────────────────────────────────────────────────────
     @app_commands.command(name="warnings", description="View a member's warnings")
     @app_commands.describe(member="Member to check")
     @has_any_role(STAFF_ROLE_ID)
@@ -229,7 +211,6 @@ class Moderation(commands.Cog):
                 embed.add_field(name=f"Warning {i}", value=reason, inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    # ── /clearwarns ───────────────────────────────────────────────────────────
     @app_commands.command(name="clearwarns", description="Clear all warnings for a member")
     @app_commands.describe(member="Member to clear warnings for")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -244,7 +225,6 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── /purge ────────────────────────────────────────────────────────────────
     @app_commands.command(name="purge", description="Bulk delete messages in this channel")
     @app_commands.describe(amount="Number of messages to delete (1–500)", user="Only delete messages from this user (optional)")
     @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -267,7 +247,6 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── /lock ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="lock", description="Lock this channel so @everyone cannot send messages")
     @app_commands.describe(reason="Reason for the lock")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -290,7 +269,6 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── /unlock ───────────────────────────────────────────────────────────────
     @app_commands.command(name="unlock", description="Unlock this channel")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def unlock(self, interaction: discord.Interaction):
@@ -311,7 +289,6 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── /slowmode ─────────────────────────────────────────────────────────────
     @app_commands.command(name="slowmode", description="Set slowmode for this channel")
     @app_commands.describe(seconds="Slowmode in seconds (0 to disable, max 21600)")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -328,7 +305,6 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── /nick ─────────────────────────────────────────────────────────────────
     @app_commands.command(name="nick", description="Change a member's nickname")
     @app_commands.describe(member="Member to rename", nickname="New nickname (leave empty to reset)")
     @has_any_role(STAFF_ROLE_ID)
@@ -350,13 +326,11 @@ class Moderation(commands.Cog):
             ],
         )
 
-    # ── Error handler ─────────────────────────────────────────────────────────
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
             await interaction.response.send_message("❌ You don't have the required role.", ephemeral=True)
         else:
             await interaction.response.send_message(f"❌ An error occurred: {error}", ephemeral=True)
-
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Moderation(bot))

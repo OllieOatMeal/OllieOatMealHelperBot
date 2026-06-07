@@ -1,23 +1,9 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# cogs/logging.py — Full audit logging
-# ══════════════════════════════════════════════════════════════════════════════
-#
-# Logs the following to your #logs channel:
-#   Messages  : edit, delete
-#   Members   : join, leave, ban, unban, role changes, nickname changes
-#   Voice     : join, leave, move
-#   Reactions : added, removed
-#   Channels  : created, deleted
-#   Roles     : created, deleted
-#   Commands  : every prefix/slash command used, and errors
-
 import discord
 from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timezone
 from config import has_any_role, OWNER_ROLE_ID, LOG_CHANNEL_NAME, LOG_CHANNEL_ID as _LOG_CHANNEL_ID
 
-# Mutable so /setlogchannel can update it at runtime
 _log_channel_id = _LOG_CHANNEL_ID
 
 COLOURS = {
@@ -49,7 +35,6 @@ class Logging(commands.Cog):
         self.bot = bot
         self._log_channel: discord.TextChannel | None = None
 
-    # ── Helpers ───────────────────────────────────────────────────────────────
     async def get_log_channel(self, guild: discord.Guild) -> discord.TextChannel | None:
         global _log_channel_id
         if self._log_channel and self._log_channel.guild == guild:
@@ -83,7 +68,6 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             pass
 
-    # ── Message events ────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         if before.author.bot or before.content == after.content or not before.guild:
@@ -116,7 +100,6 @@ class Logging(commands.Cog):
             message.guild, colour=COLOURS["delete"], title="🗑️ Message Deleted", fields=fields
         )
 
-    # ── Member events ─────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         age = (datetime.now(timezone.utc) - member.created_at).days
@@ -169,7 +152,7 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        # Nickname change
+        
         if before.nick != after.nick:
             await self.send_log(
                 before.guild,
@@ -182,7 +165,6 @@ class Logging(commands.Cog):
                     ("After", after.nick or "*none*", True),
                 ],
             )
-        # Role changes
         added   = [r for r in after.roles  if r not in before.roles]
         removed = [r for r in before.roles if r not in after.roles]
         if added or removed:
@@ -195,7 +177,6 @@ class Logging(commands.Cog):
                 before.guild, colour=COLOURS["role"], title="🎭 Member Roles Updated", fields=fields
             )
 
-    # ── Voice events ──────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         if before.channel == after.channel:
@@ -218,7 +199,6 @@ class Logging(commands.Cog):
             member.guild, colour=COLOURS["voice"], title=f"🔊 Voice {action}", fields=fields
         )
 
-    # ── Reaction events ───────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User | discord.Member):
         if user.bot or not reaction.message.guild:
@@ -249,7 +229,6 @@ class Logging(commands.Cog):
             ],
         )
 
-    # ── Channel events ────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         await self.send_log(
@@ -264,7 +243,6 @@ class Logging(commands.Cog):
             fields=[("Name", channel.name, True), ("Type", str(channel.type), True), ("ID", str(channel.id), True)],
         )
 
-    # ── Role events ───────────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: discord.Role):
         await self.send_log(
@@ -279,7 +257,6 @@ class Logging(commands.Cog):
             fields=[("Name", role.name, True), ("ID", str(role.id), True)],
         )
 
-    # ── Command logging ───────────────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_command(self, ctx: commands.Context):
         if not ctx.guild:
@@ -306,7 +283,6 @@ class Logging(commands.Cog):
             ],
         )
 
-    # ── /setlogchannel ────────────────────────────────────────────────────────
     @app_commands.command(name="setlogchannel", description="Set the channel where logs are sent")
     @has_any_role(OWNER_ROLE_ID)
     async def set_log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):

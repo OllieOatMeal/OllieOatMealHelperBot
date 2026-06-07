@@ -1,14 +1,3 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# cogs/embeds.py — Rich embed creation system
-# ══════════════════════════════════════════════════════════════════════════════
-#
-# Commands (Moderator or Admin only):
-#   /embed simple    — Quick one-liner embed
-#   /embed builder   — Interactive modal-based embed builder
-#   /embed announce  — Pre-styled announcement embed
-#   /embed rules     — Pre-styled numbered rules embed
-#   /embed edit      — Edit an existing bot-sent embed by message ID
-
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -22,8 +11,6 @@ def parse_colour(colour_str: str) -> int:
     except (ValueError, AttributeError):
         return 0x7289DA
 
-
-# ── Modals ────────────────────────────────────────────────────────────────────
 
 class EmbedBuilderModal(discord.ui.Modal, title="Embed Builder"):
     embed_title = discord.ui.TextInput(label="Title", placeholder="Your embed title...", max_length=256)
@@ -89,15 +76,12 @@ class EmbedEditModal(discord.ui.Modal, title="Edit Embed"):
         await interaction.response.send_message("✅ Embed updated!", ephemeral=True)
 
 
-# ── Cog ───────────────────────────────────────────────────────────────────────
-
 class Embeds(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     embed_group = app_commands.Group(name="embed", description="Create and manage embeds")
 
-    # ── /embed simple ─────────────────────────────────────────────────────────
     @embed_group.command(name="simple", description="Send a simple embed quickly")
     @app_commands.describe(
         channel="Channel to send the embed to", title="Embed title", description="Embed description",
@@ -125,14 +109,12 @@ class Embeds(commands.Cog):
         await channel.send(content=ping_role.mention if ping_role else None, embed=embed)
         await interaction.response.send_message(f"✅ Embed sent to {channel.mention}!", ephemeral=True)
 
-    # ── /embed builder ────────────────────────────────────────────────────────
     @embed_group.command(name="builder", description="Open an interactive embed builder")
     @app_commands.describe(channel="Channel to send the finished embed to")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def embed_builder(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await interaction.response.send_modal(EmbedBuilderModal(channel))
 
-    # ── /embed announce ───────────────────────────────────────────────────────
     @embed_group.command(name="announce", description="Send a pre-styled announcement embed")
     @app_commands.describe(channel="Channel to announce in", title="Announcement title", message="Announcement body", ping_role="Role to ping (optional)")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -151,7 +133,6 @@ class Embeds(commands.Cog):
         await channel.send(content=ping_role.mention if ping_role else None, embed=embed)
         await interaction.response.send_message(f"✅ Announcement sent to {channel.mention}!", ephemeral=True)
 
-    # ── /embed rules ──────────────────────────────────────────────────────────
     @embed_group.command(name="rules", description="Post a rules embed with numbered rules")
     @app_commands.describe(
         channel="Channel to post rules in", title="Rules title",
@@ -184,7 +165,6 @@ class Embeds(commands.Cog):
         await channel.send(embed=embed)
         await interaction.response.send_message(f"✅ Rules posted in {channel.mention}!", ephemeral=True)
 
-    # ── /embed edit ───────────────────────────────────────────────────────────
     @embed_group.command(name="edit", description="Edit an existing embed sent by this bot")
     @app_commands.describe(channel="Channel containing the message", message_id="ID of the message to edit")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
@@ -202,7 +182,6 @@ class Embeds(commands.Cog):
 
         await interaction.response.send_modal(EmbedEditModal(message))
 
-    # ── Error handler ─────────────────────────────────────────────────────────
     async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
         if isinstance(error, app_commands.CheckFailure):
             await interaction.response.send_message("❌ You don't have the required role.", ephemeral=True)

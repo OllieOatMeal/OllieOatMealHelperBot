@@ -1,7 +1,3 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# cogs/music.py — YouTube music player with persistent panel embed
-# ══════════════════════════════════════════════════════════════════════════════
-
 import asyncio
 import os
 import random
@@ -11,9 +7,32 @@ import discord
 import yt_dlp
 from discord import app_commands
 from discord.ext import commands
+from config import STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+from cogs.blacklist import is_blacklisted
 
 FFMPEG_PATH  = os.getenv("FFMPEG_PATH", "ffmpeg")
 EMBED_COLOUR = 0x5865F2
+
+
+MUSIC_ROLE_IDS = (
+    1117193408105164902,
+    STAFF_ROLE_ID,
+    ADMIN_ROLE_ID,
+    HEAD_ADMIN_ROLE_ID,
+    OWNER_ROLE_ID,
+)
+
+def user_has_music_role(member: discord.Member) -> bool:
+    member_role_ids = {r.id for r in member.roles}
+    return bool(member_role_ids.intersection(MUSIC_ROLE_IDS))
+
+def music_only():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if not user_has_music_role(interaction.user):
+            raise app_commands.CheckFailure("You don't have permission to use music commands.")
+        return True
+    return app_commands.check(predicate)
+
 
 YTDL_OPTS = {
     "format": "bestaudio/best",
@@ -33,7 +52,6 @@ FFMPEG_OPTS = {
 ytdl = yt_dlp.YoutubeDL(YTDL_OPTS)
 
 
-# ── Guild state ───────────────────────────────────────────────────────────────
 
 class GuildState:
     def __init__(self):
@@ -43,10 +61,9 @@ class GuildState:
         self.shuffle: bool = False
         self.loop: bool = False
         self.panel_message: discord.Message | None = None
-        self.panel_channel_id: int | None = None   # track which channel the panel lives in
+        self.panel_channel_id: int | None = None
+        self.voice_channel: discord.VoiceChannel | None = None  
 
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 async def fetch_track(query: str) -> dict | None:
     loop = asyncio.get_event_loop()
@@ -80,9 +97,9 @@ def fmt_duration(secs) -> str:
 
 
 def build_embed(state: GuildState) -> discord.Embed:
-    vol_pct   = int(state.volume * 100)
-    vol_icon  = "🔇" if vol_pct == 0 else ("🔉" if vol_pct < 60 else "🔊")
-    footer    = (
+    vol_pct  = int(state.volume * 100)
+    vol_icon = "🔇" if vol_pct == 0 else ("🔉" if vol_pct < 60 else "🔊")
+    footer   = (
         f"Shuffle: {'ON 🔀' if state.shuffle else 'OFF'}  •  "
         f"Loop: {'ON 🔁' if state.loop else 'OFF'}  •  "
         f"{vol_icon} {vol_pct}%"
@@ -125,7 +142,15 @@ def build_embed(state: GuildState) -> discord.Embed:
     return e
 
 
-# ── Button View ───────────────────────────────────────────────────────────────
+async def set_vc_status(vc_channel: discord.VoiceChannel | None, status: str):
+    """Set or clear the voice channel status (description). Silently ignores errors."""
+    if vc_channel is None:
+        return
+    try:
+        await vc_channel.edit(status=status)
+    except Exception as e:
+        print(f"[music] VC status update failed: {e}")
+
 
 class MusicView(discord.ui.View):
     def __init__(self, cog: "Music"):
@@ -134,6 +159,20 @@ class MusicView(discord.ui.View):
 
     def _state(self, interaction: discord.Interaction) -> GuildState:
         return self.cog.get_state(interaction.guild_id)
+
+    async def _check_role(self, interaction: discord.Interaction) -> bool:
+        """Return True if allowed, else send an ephemeral error and return False."""
+        if await is_blacklisted(interaction.user.id, "music"):
+            await interaction.response.send_message(
+                "🚫 You are blacklisted from using music controls.", ephemeral=True
+            )
+            return False
+        if not user_has_music_role(interaction.user):
+            await interaction.response.send_message(
+                "❌ You don't have permission to use music controls.", ephemeral=True
+            )
+            return False
+        return True
 
     async def _refresh(self, interaction: discord.Interaction):
         state = self._state(interaction)
@@ -145,9 +184,10 @@ class MusicView(discord.ui.View):
         except Exception as e:
             print(f"[music] button refresh error: {e}")
 
-    # Row 0: ⏮ ⏯ ⏭ 🔀 🔁  (5 max)
     @discord.ui.button(emoji="⏮", style=discord.ButtonStyle.secondary, custom_id="music:prev", row=0)
     async def btn_prev(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         vc = interaction.guild.voice_client
         state = self._state(interaction)
         if vc and (vc.is_playing() or vc.is_paused()) and state.current:
@@ -158,6 +198,8 @@ class MusicView(discord.ui.View):
 
     @discord.ui.button(emoji="⏯", style=discord.ButtonStyle.primary, custom_id="music:playpause", row=0)
     async def btn_playpause(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         vc = interaction.guild.voice_client
         if vc:
             if vc.is_paused():
@@ -168,6 +210,8 @@ class MusicView(discord.ui.View):
 
     @discord.ui.button(emoji="⏭", style=discord.ButtonStyle.secondary, custom_id="music:skip", row=0)
     async def btn_skip(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         vc = interaction.guild.voice_client
         if vc and (vc.is_playing() or vc.is_paused()):
             vc.stop()
@@ -175,6 +219,8 @@ class MusicView(discord.ui.View):
 
     @discord.ui.button(emoji="🔀", style=discord.ButtonStyle.secondary, custom_id="music:shuffle", row=0)
     async def btn_shuffle(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         state = self._state(interaction)
         state.shuffle = not state.shuffle
         button.style = discord.ButtonStyle.success if state.shuffle else discord.ButtonStyle.secondary
@@ -182,25 +228,32 @@ class MusicView(discord.ui.View):
 
     @discord.ui.button(emoji="🔁", style=discord.ButtonStyle.secondary, custom_id="music:loop", row=0)
     async def btn_loop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         state = self._state(interaction)
         state.loop = not state.loop
         button.style = discord.ButtonStyle.success if state.loop else discord.ButtonStyle.secondary
         await self._refresh(interaction)
 
-    # Row 1: ⏹ Vol− Vol+ Queue  (4)
     @discord.ui.button(emoji="⏹", style=discord.ButtonStyle.danger, custom_id="music:stop", row=1)
     async def btn_stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         state = self._state(interaction)
         state.queue.clear()
         state.current = None
         vc = interaction.guild.voice_client
         if vc:
             vc.stop()
+            await set_vc_status(state.voice_channel, "")
             await vc.disconnect()
+        state.voice_channel = None
         await self._refresh(interaction)
 
     @discord.ui.button(label="Vol −", style=discord.ButtonStyle.secondary, custom_id="music:vol_down", row=1)
     async def btn_vol_down(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         state = self._state(interaction)
         state.volume = max(0.0, round(state.volume - 0.1, 1))
         vc = interaction.guild.voice_client
@@ -210,6 +263,8 @@ class MusicView(discord.ui.View):
 
     @discord.ui.button(label="Vol +", style=discord.ButtonStyle.secondary, custom_id="music:vol_up", row=1)
     async def btn_vol_up(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not await self._check_role(interaction):
+            return
         state = self._state(interaction)
         state.volume = min(2.0, round(state.volume + 0.1, 1))
         vc = interaction.guild.voice_client
@@ -237,9 +292,6 @@ class MusicView(discord.ui.View):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-
-# ── Cog ───────────────────────────────────────────────────────────────────────
-
 class Music(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -249,7 +301,6 @@ class Music(commands.Cog):
         return self._states.setdefault(guild_id, GuildState())
 
     async def _send_panel(self, channel: discord.TextChannel, state: GuildState):
-        """Send a brand-new panel message and store it on state."""
         embed = build_embed(state)
         view  = MusicView(self)
         msg   = await channel.send(embed=embed, view=view)
@@ -257,7 +308,6 @@ class Music(commands.Cog):
         state.panel_channel_id = channel.id
 
     async def _update_panel(self, guild: discord.Guild):
-        """Edit the existing panel in-place. Does nothing if there is no panel yet."""
         state = self.get_state(guild.id)
         if not state.panel_message:
             return
@@ -280,6 +330,7 @@ class Music(commands.Cog):
 
         if not state.queue:
             state.current = None
+            await set_vc_status(state.voice_channel, "")
             await self._update_panel(guild)
             return
 
@@ -304,18 +355,17 @@ class Music(commands.Cog):
             asyncio.run_coroutine_threadsafe(self.play_next(guild), self.bot.loop)
 
         vc.play(source, after=after_playing)
-        await self._update_panel(guild)
 
-    # ── /play ─────────────────────────────────────────────────────────────────
+        await set_vc_status(state.voice_channel, f"🎵 {track['title']}")
+        await self._update_panel(guild)
 
     @app_commands.command(name="play", description="Play a song from YouTube (search term or URL)")
     @app_commands.describe(query="Song name or YouTube URL")
+    @music_only()
     async def play(self, interaction: discord.Interaction, query: str):
         print(f"[music] /play called by {interaction.user} query={query!r}")
         if not interaction.user.voice or not interaction.user.voice.channel:
-            await interaction.response.send_message(
-                "❌ Join a voice channel first.", ephemeral=True
-            )
+            await interaction.response.send_message("❌ Join a voice channel first.", ephemeral=True)
             return
 
         try:
@@ -323,6 +373,10 @@ class Music(commands.Cog):
             print("[music] /play deferred ok")
         except Exception as e:
             print(f"[music] /play defer FAILED: {e}")
+            return
+
+        if await is_blacklisted(interaction.user.id, "music"):
+            await interaction.followup.send("🚫 You are blacklisted from using music.", ephemeral=True)
             return
 
         try:
@@ -352,6 +406,7 @@ class Music(commands.Cog):
 
         state = self.get_state(interaction.guild_id)
         state.queue.append(track)
+        state.voice_channel = interaction.user.voice.channel  # store for VC status updates
 
         already_playing = vc.is_playing() or vc.is_paused()
 
@@ -365,9 +420,8 @@ class Music(commands.Cog):
                 return
 
         try:
-            channel = interaction.channel
-            await self._send_panel(channel, state)
-            print(f"[music] panel sent to #{channel}")
+            await self._send_panel(interaction.channel, state)
+            print(f"[music] panel sent to #{interaction.channel}")
         except Exception as e:
             print(f"[music] _send_panel FAILED: {e}")
 
@@ -378,9 +432,9 @@ class Music(commands.Cog):
         except Exception as e:
             print(f"[music] followup FAILED: {e}")
 
-    # ── /panel ────────────────────────────────────────────────────────────────
 
     @app_commands.command(name="panel", description="Re-post the music panel in this channel")
+    @music_only()
     async def panel(self, interaction: discord.Interaction):
         print(f"[music] /panel called by {interaction.user}")
         try:
@@ -395,9 +449,8 @@ class Music(commands.Cog):
         state.panel_channel_id = None
 
         try:
-            channel = interaction.channel
-            print(f"[music] sending panel to channel: {channel} (type={type(channel).__name__})")
-            await self._send_panel(channel, state)
+            print(f"[music] sending panel to channel: {interaction.channel} (type={type(interaction.channel).__name__})")
+            await self._send_panel(interaction.channel, state)
             print("[music] panel send ok")
         except Exception as e:
             print(f"[music] _send_panel FAILED: {e}")
@@ -409,9 +462,8 @@ class Music(commands.Cog):
         except Exception as e:
             print(f"[music] /panel followup FAILED: {e}")
 
-    # ── /stop ─────────────────────────────────────────────────────────────────
-
     @app_commands.command(name="stop", description="Stop playback and leave voice")
+    @music_only()
     async def stop(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         state = self.get_state(interaction.guild_id)
@@ -420,11 +472,11 @@ class Music(commands.Cog):
         vc = interaction.guild.voice_client
         if vc:
             vc.stop()
+            await set_vc_status(state.voice_channel, "")
             await vc.disconnect()
+        state.voice_channel = None
         await self._update_panel(interaction.guild)
         await interaction.followup.send("⏹ Stopped and disconnected.", ephemeral=True)
-
-    # ── /queue ────────────────────────────────────────────────────────────────
 
     @app_commands.command(name="queue", description="Show the current queue")
     async def queue_cmd(self, interaction: discord.Interaction):
@@ -449,9 +501,9 @@ class Music(commands.Cog):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    # ── /skip ─────────────────────────────────────────────────────────────────
 
     @app_commands.command(name="skip", description="Skip the current track")
+    @music_only()
     async def skip(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc and (vc.is_playing() or vc.is_paused()):
@@ -460,9 +512,8 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
-    # ── /pause ────────────────────────────────────────────────────────────────
-
     @app_commands.command(name="pause", description="Pause playback")
+    @music_only()
     async def pause(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc and vc.is_playing():
@@ -472,9 +523,8 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
-    # ── /resume ───────────────────────────────────────────────────────────────
-
     @app_commands.command(name="resume", description="Resume playback")
+    @music_only()
     async def resume(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
         if vc and vc.is_paused():
@@ -484,10 +534,10 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("Not paused.", ephemeral=True)
 
-    # ── /volume ───────────────────────────────────────────────────────────────
 
     @app_commands.command(name="volume", description="Set volume (0–200)")
     @app_commands.describe(level="Volume level from 0 to 200")
+    @music_only()
     async def volume(self, interaction: discord.Interaction, level: app_commands.Range[int, 0, 200]):
         state = self.get_state(interaction.guild_id)
         state.volume = level / 100
@@ -497,9 +547,9 @@ class Music(commands.Cog):
         await interaction.response.send_message(f"🔊 Volume set to **{level}%**.", ephemeral=True)
         await self._update_panel(interaction.guild)
 
-    # ── /shuffle ──────────────────────────────────────────────────────────────
 
     @app_commands.command(name="shuffle", description="Toggle shuffle mode")
+    @music_only()
     async def shuffle_cmd(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild_id)
         state.shuffle = not state.shuffle
@@ -508,9 +558,9 @@ class Music(commands.Cog):
         )
         await self._update_panel(interaction.guild)
 
-    # ── /loop ─────────────────────────────────────────────────────────────────
 
     @app_commands.command(name="loop", description="Toggle loop mode")
+    @music_only()
     async def loop_cmd(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild_id)
         state.loop = not state.loop
@@ -519,19 +569,31 @@ class Music(commands.Cog):
         )
         await self._update_panel(interaction.guild)
 
-    # ── /leave ────────────────────────────────────────────────────────────────
 
     @app_commands.command(name="leave", description="Leave voice channel")
+    @music_only()
     async def leave(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
+        state = self.get_state(interaction.guild_id)
         if vc:
+            await set_vc_status(state.voice_channel, "")
             await vc.disconnect()
+            state.voice_channel = None
             await interaction.response.send_message("👋 Left voice channel.", ephemeral=True)
         else:
             await interaction.response.send_message("Not in a voice channel.", ephemeral=True)
 
 
-# ── Setup ─────────────────────────────────────────────────────────────────────
+    async def cog_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    "❌ You don't have permission to use music commands.", ephemeral=True
+                )
+        else:
+            print(f"[music] unhandled error in {interaction.command}: {error}")
+            raise error
+
 
 async def setup(bot: commands.Bot):
     cog = Music(bot)

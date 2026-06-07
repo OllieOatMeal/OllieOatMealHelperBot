@@ -1,0 +1,137 @@
+{
+  "member": [
+    {
+      "id": "helper",
+      "label": "Helper",
+      "emoji": "\ud83e\udd1d",
+      "colour": 3066993,
+      "accept_role_ids": [
+        1117196806309298246
+      ],
+      "questions": [
+        {
+          "label": "What is your age?",
+          "placeholder": "e.g. 16",
+          "style": "short",
+          "required": true,
+          "max_length": 4
+        },
+        {
+          "label": "How active are you on the server?",
+          "placeholder": "e.g. 3\u20134 hours/day",
+          "style": "short",
+          "required": true,
+          "max_length": 100
+        },
+        {
+          "label": "Why do you want to be a Helper?",
+          "placeholder": "Explain motivation\u2026",
+          "style": "paragraph",
+          "required": true,
+          "max_length": 500
+        },
+        {
+          "label": "Do you agree to be active?",
+          "placeholder": "Yes or No",
+          "style": "short",
+          "required": true,
+          "max_length": 3
+        }
+      ]
+    },
+    {
+      "id": "content_creator",
+      "label": "Content Creator",
+      "emoji": "\ud83c\udfa5",
+      "colour": 15965202,
+      "accept_role_ids": [
+        1117387942592270367
+      ],
+      "questions": [
+        {
+          "label": "What content do you produce?",
+          "placeholder": "e.g. TikToks, YouTube\u2026",
+          "style": "paragraph",
+          "required": true,
+          "max_length": 300
+        },
+        {
+          "label": "How often would you post?",
+          "placeholder": "e.g. Once a week",
+          "style": "short",
+          "required": true,
+          "max_length": 80
+        },
+        {
+          "label": "Link something you made:",
+          "placeholder": "e.g. TikTok/YouTube",
+          "style": "short",
+          "required": true,
+          "max_length": 100
+        }
+      ]
+    },
+    {
+      "id": "staff",
+      "label": "Staff",
+      "emoji": "\ud83d\udee1\ufe0f",
+      "colour": 5793266,
+      "accept_role_ids": [
+        1117193288051601508,
+        1117191230485438584
+      ],
+      "questions": [
+        {
+          "label": "What is your age?",
+          "placeholder": "e.g. 18",
+          "style": "short",
+          "required": true,
+          "max_length": 4
+        },
+        {
+          "label": "What timezone are you in?",
+          "placeholder": "e.g. GMT+1, EST...",
+          "style": "short",
+          "required": true,
+          "max_length": 30
+        },
+        {
+          "label": "Why do you want to be staff?",
+          "placeholder": "Tell us your motivation...",
+          "style": "paragraph",
+          "required": true,
+          "max_length": 500
+        },
+        {
+          "label": "Do you have prior moderation experience?",
+          "placeholder": "Describe your experience",
+          "style": "paragraph",
+          "required": false,
+          "max_length": 400
+        },
+        {
+          "label": "Why should we choose you over other users?",
+          "placeholder": "What makes you stand out?",
+          "style": "paragraph",
+          "required": true,
+          "max_length": 500
+        },
+        {
+          "label": "Do you agree to be confidential?",
+          "placeholder": "Yes or No",
+          "style": "short",
+          "required": true,
+          "max_length": 3
+        },
+        {
+          "label": "Do you agree to be active?",
+          "placeholder": "Yes or No",
+          "style": "short",
+          "required": true,
+          "max_length": 3
+        }
+      ]
+    }
+  ],
+  "open": {}
+}

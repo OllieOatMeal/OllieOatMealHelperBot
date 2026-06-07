@@ -1,5 +1,3 @@
-# bot.py
-
 import os
 import discord
 from discord.ext import commands
@@ -52,6 +50,7 @@ async def load_cogs():
         "cogs.tickets",
         "cogs.applications",
         "cogs.music",
+        "cogs.blacklist",
     ]
 
     print("Loading cogs...")
