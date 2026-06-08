@@ -15,7 +15,6 @@ This bot was coded in Python by @OllieOatMeal.
 * Users wishing to apply fill out a discord form before its sent for marking.
 * Once submitted the marking team are notified and can choose to accept/deny or put on hold; the applying user gets a DM in anycase.
 
-
 ### Blacklists
 
 * Staff are able to add users to a ticket/application blacklist where they wont be able to open tickets / apply.
@@ -56,6 +55,12 @@ This bot was coded in Python by @OllieOatMeal.
 * Allows users to play music through the bot by sending a query to find on YouTube.
 * There is a full panel for controling the full music panel.
 
+### Tickets/Modmail
+
+* This allows members to seek support and appeal punishments.
+* A channel is created for either and Ticket Support staff pinged.
+* Users can be added to a ticket with /add.
+* A ticket/modmail can be forwarded to Head Admin + by any Ticket Support member through /forward.
 
 ## There are more updates constantly being pushed to .main branch.
 

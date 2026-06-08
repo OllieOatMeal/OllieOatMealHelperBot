@@ -5,15 +5,16 @@ Modmail system — users DM the bot to open a thread with staff.
 
 Flow:
   1. A user DMs the bot any message
-  2. The bot creates a private channel in the modmail category (mirroring tickets)
+  2. The bot creates a private channel in the modmail category
   3. Everything the user sends in DMs is relayed to that channel, and vice versa
   4. Staff can claim, forward, or close the thread
   5. On close, a transcript is saved and logged to #ticket-logs
 
-Commands (Admin+ required):
+Commands:
   /modmail-panel — Post a panel telling users how to contact staff via DM
+  /modmail-close — Force-close the current modmail thread
 
-Buttons (available inside a modmail channel):
+Buttons (inside a modmail channel):
   Claim   — Assign yourself as the handler
   Forward — Forward the thread to Head Admin
   Close   — Close, save transcript, and DM the user a summary
@@ -33,10 +34,10 @@ from config import (
     HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID,
 )
 
-# guild_id -> {user_id -> channel_id}  (in-memory; survives restarts via channel topic)
+# guild_id -> {user_id -> channel_id}
 _open_threads: dict[int, dict[int, int]] = {}
 
-MODMAIL_CATEGORY_NAME = TICKET_CATEGORY_NAME   # reuse the same category
+MODMAIL_CATEGORY_NAME = TICKET_CATEGORY_NAME
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -66,7 +67,6 @@ async def _send_log(guild, *, colour, title, fields, thumbnail=None):
 
 
 def _parse_user_id(channel: discord.TextChannel) -> int | None:
-    """Extract the user ID stored in the channel topic."""
     topic = channel.topic or ""
     if "ID:" in topic:
         try:
@@ -79,8 +79,6 @@ def _parse_user_id(channel: discord.TextChannel) -> int | None:
 # ── Views ──────────────────────────────────────────────────────────────────────
 
 class ModmailPanelView(discord.ui.View):
-    """Persistent view posted by /modmail-panel."""
-
     def __init__(self):
         super().__init__(timeout=None)
 
@@ -106,8 +104,6 @@ class ModmailPanelView(discord.ui.View):
 
 
 class ModmailControlView(discord.ui.View):
-    """Persistent view pinned inside each modmail channel."""
-
     def __init__(self):
         super().__init__(timeout=None)
 
@@ -129,7 +125,6 @@ class ModmailControlView(discord.ui.View):
             )
         )
 
-        # Build transcript
         lines = [
             f"Modmail transcript: {channel.name}",
             f"Closed by:  {interaction.user} ({interaction.user.id})",
@@ -147,7 +142,6 @@ class ModmailControlView(discord.ui.View):
             filename=f"{channel.name}-transcript.txt",
         )
 
-        # Log it
         log_ch = await _get_log_channel(guild)
         if log_ch:
             close_embed = discord.Embed(
@@ -164,7 +158,6 @@ class ModmailControlView(discord.ui.View):
             except discord.Forbidden:
                 pass
 
-        # DM the user that their thread was closed
         user_id = _parse_user_id(channel)
         if user_id:
             try:
@@ -182,8 +175,6 @@ class ModmailControlView(discord.ui.View):
                 )
             except (discord.NotFound, discord.Forbidden):
                 pass
-
-            # Clean up in-memory tracking
             _open_threads.get(guild.id, {}).pop(user_id, None)
 
         await asyncio.sleep(5)
@@ -224,35 +215,29 @@ class ModmailControlView(discord.ui.View):
 
 
 class ForwardRoleSelect(discord.ui.View):
-    """Dropdown to pick which role to forward the modmail to."""
-
     def __init__(self, channel: discord.TextChannel):
         super().__init__(timeout=60)
         self.channel = channel
 
     @discord.ui.select(
         placeholder="Choose a role to forward to...",
-        options=[
-            discord.SelectOption(label="Head Admin", value="HEAD_ADMIN"),
-        ],
+        options=[discord.SelectOption(label="Head Admin", value="HEAD_ADMIN")],
         custom_id="modmail:forward:role_select",
     )
     async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
         await interaction.response.defer(ephemeral=True)
-
         guild = interaction.guild
         channel = self.channel
-
-        role_map = {"HEAD_ADMIN": HEAD_ADMIN_ROLE_ID}
-        target_role = guild.get_role(role_map[select.values[0]])
+        target_role = guild.get_role({
+            "HEAD_ADMIN": HEAD_ADMIN_ROLE_ID
+        }[select.values[0]])
 
         if not target_role:
             return await interaction.followup.send("❌ Target role not found.", ephemeral=True)
 
         try:
-            # Remove individual member overwrites except the user and bot
             user_id = _parse_user_id(channel)
-            for target, overwrite in list(channel.overwrites.items()):
+            for target, _ in list(channel.overwrites.items()):
                 if isinstance(target, discord.Member):
                     if user_id and target.id == user_id:
                         continue
@@ -299,91 +284,17 @@ class Modmail(commands.Cog):
         bot.add_view(ModmailPanelView())
         bot.add_view(ModmailControlView())
 
-    # ── DM listener ───────────────────────────────────────────────────────────
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        # Only handle DMs, ignore bots
-        if message.author.bot:
-            return
-        if message.guild is not None:
-            return
-
-        user = message.author
-
-        # Check blacklist against the first guild the bot shares with the user
-        guild = next((g for g in self.bot.guilds if g.get_member(user.id)), None)
-        if not guild:
-            return
-
-        if await is_blacklisted(user.id, "tickets"):
-            try:
-                await user.send("🚫 You are blacklisted from contacting staff.")
-            except discord.Forbidden:
-                pass
-            return
-
-        # Find or create the modmail channel
-        threads = _open_threads.setdefault(guild.id, {})
-        channel_id = threads.get(user.id)
-        channel = guild.get_channel(channel_id) if channel_id else None
-
-        # Also scan existing channels in case bot restarted (topic fallback)
-        if not channel:
-            channel = discord.utils.find(
-                lambda c: c.name.startswith("modmail-") and str(user.id) in (c.topic or ""),
-                guild.text_channels,
-            )
-            if channel:
-                threads[user.id] = channel.id
-
-        if not channel:
-            channel = await self._open_thread(guild, user)
-            if not channel:
-                return
-            threads[user.id] = channel.id
-
-        # Relay the DM to the modmail channel
-        relay_embed = discord.Embed(
-            description=message.content or "(no text)",
-            colour=0x5865F2,
-            timestamp=message.created_at,
-        )
-        relay_embed.set_author(name=str(user), icon_url=user.display_avatar.url)
-
-        files = [await att.to_file() for att in message.attachments]
-        try:
-            await channel.send(embed=relay_embed, files=files)
-        except discord.Forbidden:
-            pass
-
-        # Acknowledge receipt to the user
-        try:
-            await message.add_reaction("✅")
-        except discord.Forbidden:
-            pass
-
-    # ── Staff → User relay ────────────────────────────────────────────────────
-
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):  # noqa: F811  (handled below)
-        pass  # placeholder — see _dispatch below
-
-    async def cog_load(self):
-        # Replace the duplicate listener with a single dispatcher
-        self.bot.remove_listener(self.on_message, "on_message")
-        self.bot.add_listener(self._dispatch_message, "on_message")
-
-    async def _dispatch_message(self, message: discord.Message):
         if message.author.bot:
             return
 
-        # DM → channel
+        # ── DM → staff channel ─────────────────────────────────────────────
         if message.guild is None:
             await self._handle_dm(message)
             return
 
-        # Channel → DM (staff reply)
+        # ── Staff channel → DM ─────────────────────────────────────────────
         if message.channel.name.startswith("modmail-"):
             await self._handle_staff_reply(message)
 
@@ -404,6 +315,7 @@ class Modmail(commands.Cog):
         channel_id = threads.get(user.id)
         channel = guild.get_channel(channel_id) if channel_id else None
 
+        # Fallback scan in case bot restarted
         if not channel:
             channel = discord.utils.find(
                 lambda c: c.name.startswith("modmail-") and str(user.id) in (c.topic or ""),
@@ -437,13 +349,11 @@ class Modmail(commands.Cog):
             pass
 
     async def _handle_staff_reply(self, message: discord.Message):
-        """Relay a staff message in a modmail channel back to the user via DM."""
-        # Ignore system messages and embeds-only (bot relays)
+        # Skip empty messages and bot relays (embeds with no content)
         if not message.content and not message.attachments:
             return
 
-        channel = message.channel
-        user_id = _parse_user_id(channel)
+        user_id = _parse_user_id(message.channel)
         if not user_id:
             return
 
@@ -468,15 +378,13 @@ class Modmail(commands.Cog):
             await user.send(embed=reply_embed, files=files)
             await message.add_reaction("✅")
         except discord.Forbidden:
-            await channel.send(
+            await message.channel.send(
                 embed=discord.Embed(
                     description=f"⚠️ Could not DM {user.mention} — they may have DMs disabled.",
                     colour=0xE74C3C,
                 ),
                 delete_after=10,
             )
-
-    # ── Thread creation ────────────────────────────────────────────────────────
 
     async def _open_thread(self, guild: discord.Guild, user: discord.User) -> discord.TextChannel | None:
         category = discord.utils.get(guild.categories, name=MODMAIL_CATEGORY_NAME)
@@ -505,14 +413,13 @@ class Modmail(commands.Cog):
             topic=f"Modmail from {user} | ID: {user.id}",
         )
 
-        # Opening embed in the channel
         embed = discord.Embed(
             title="✉️ New Modmail",
             description=(
                 f"**User:** {user.mention} (`{user}`)\n"
                 f"**ID:** `{user.id}`\n\n"
-                "Messages sent in this channel will be relayed to the user via DM.\n"
-                "Messages the user sends will appear here automatically."
+                "Messages typed in this channel are relayed to the user via DM.\n"
+                "The user's replies will appear here automatically."
             ),
             colour=0x5865F2,
             timestamp=datetime.now(timezone.utc),
@@ -523,7 +430,6 @@ class Modmail(commands.Cog):
         ping = support_role.mention if support_role else ""
         await channel.send(content=ping, embed=embed, view=ModmailControlView())
 
-        # DM the user to confirm the thread is open
         try:
             await user.send(
                 embed=discord.Embed(
@@ -549,8 +455,6 @@ class Modmail(commands.Cog):
         )
 
         return channel
-
-    # ── Slash commands ─────────────────────────────────────────────────────────
 
     @app_commands.command(name="modmail-panel", description="Post the modmail contact panel in this channel")
     @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
