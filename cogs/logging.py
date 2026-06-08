@@ -1,3 +1,22 @@
+"""
+cogs/logging.py
+────────────────
+Automatic server-event logging to a configurable #logs channel.
+
+Events logged:
+  • Message edits and deletions
+  • Members joining and leaving
+  • Bans and unbans
+  • Nickname and role changes
+  • Voice channel activity (join / leave / move)
+  • Reaction adds and removals
+  • Channel and role creation/deletion
+  • Prefix command usage and errors
+
+Staff command:
+  /setlogchannel — Update the log channel at runtime (Owner only)
+"""
+
 import discord
 from discord.ext import commands
 from discord import app_commands

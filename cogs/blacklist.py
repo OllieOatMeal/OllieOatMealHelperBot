@@ -1,3 +1,21 @@
+"""
+cogs/blacklist.py
+──────────────────
+Per-system user blacklisting, persisted to data/blacklist_<system>.json.
+
+Supported systems: music, tickets, applications
+
+Commands (Staff+ required):
+  /blacklist add    — Blacklist a user from a system
+  /blacklist remove — Remove a user from a blacklist
+  /blacklist check  — Check if a user is blacklisted
+  /blacklist list   — List all blacklisted users for a system
+
+Helper functions used by other cogs:
+  is_blacklisted(user_id, system)     — Returns True/False
+  get_blacklist_entry(user_id, system) — Returns the entry dict or None
+"""
+
 import json
 import os
 from datetime import datetime, timezone

@@ -1,3 +1,16 @@
+"""
+cogs/embeds.py
+───────────────
+Slash commands for creating and managing Discord embeds.
+
+Commands (Head Admin+ required for all):
+  /embed simple   — Quick one-line embed creation
+  /embed builder  — Interactive modal-based embed builder
+  /embed announce — Pre-styled announcement embed with optional role ping
+  /embed rules    — Post a numbered rules embed
+  /embed edit     — Edit an embed the bot has already sent
+"""
+
 import discord
 from discord.ext import commands
 from discord import app_commands

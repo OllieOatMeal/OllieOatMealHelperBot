@@ -1,3 +1,23 @@
+"""
+cogs/tickets.py
+────────────────
+Support ticket system using private channels.
+
+Flow:
+  1. Admin posts a ticket panel with /ticket-panel
+  2. Users click "Open a Ticket" to create a private channel
+  3. Staff can claim, add/remove users, or close tickets
+  4. On close, a transcript is saved and logged to #ticket-logs
+
+Commands (Admin+ required):
+  /ticket-panel — Post the panel embed with the open-ticket button
+
+Buttons (available inside a ticket):
+  Claim   — Assign yourself as the handler
+  Add User / Remove User — Manage channel access
+  Close   — Close and archive the ticket
+"""
+
 import asyncio
 import io
 import discord
@@ -40,7 +60,7 @@ async def _send_ticket_log(guild, *, colour, title, fields, thumbnail=None):
 
 
 def _is_staff(member: discord.Member) -> bool:
-    return any(r.id in (TICKET_SUPPORT_ROLE_ID) for r in member.roles)
+    return any(r.id in (TICKET_SUPPORT_ROLE_ID,) for r in member.roles)
 
 
 class OpenTicketView(discord.ui.View):
@@ -216,13 +236,112 @@ class TicketControlView(discord.ui.View):
                 ("Claimed By", interaction.user.mention, True),
             ],
         )
+    
+    @discord.ui.button(label="Forward", style=discord.ButtonStyle.secondary, emoji="↗️", custom_id="ticket:forward")
+    async def forward_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not _is_staff(interaction.user):
+            return await interaction.response.send_message("❌ Only staff can forward tickets.", ephemeral=True)
+        await interaction.response.send_message("Select a role to forward this ticket to:", view=ForwardRoleSelect(interaction.channel), ephemeral=True)
+
+
+
+class ForwardRoleSelect(discord.ui.View):
+    """Select which role to forward the ticket to."""
+
+    def __init__(self, channel: discord.TextChannel):
+        super().__init__(timeout=60)
+        self.channel = channel
+
+    @discord.ui.select(
+        placeholder="Choose a role to forward to...",
+        options=[
+            discord.SelectOption(label="Head Admin", value="HEAD_ADMIN"),
+        ],
+        custom_id="ticket:forward:role_select",
+    )
+    async def select_role(self, interaction: discord.Interaction, select: discord.ui.Select):
+        await interaction.response.defer(ephemeral=True)
+        
+        guild = interaction.guild
+        channel = self.channel
+        
+        # Map selection to role ID
+        role_map = {
+            "HEAD_ADMIN": HEAD_ADMIN_ROLE_ID
+        }
+        
+        selected_role_value = select.values[0]
+        target_role_id = role_map.get(selected_role_value)
+        target_role = guild.get_role(target_role_id)
+        
+        if not target_role:
+            return await interaction.followup.send("❌ Target role not found.", ephemeral=True)
+        
+        # Get the ticket opener (from channel topic)
+        topic = channel.topic or ""
+        ticket_opener_id = None
+        if "ID:" in topic:
+            try:
+                ticket_opener_id = int(topic.split("ID:")[-1].strip())
+            except ValueError:
+                pass
+        
+        try:
+            # Remove all users except ticket opener and bot
+            for member_or_role, overwrite in channel.overwrites.items():
+                if isinstance(member_or_role, discord.Member):
+                    # Keep the ticket opener, remove everyone else
+                    if ticket_opener_id and member_or_role.id == ticket_opener_id:
+                        continue
+                    if member_or_role.id == interaction.guild.me.id:
+                        continue
+                    if member_or_role.id == HEAD_ADMIN_ROLE_ID:
+                        continue
+                    await channel.set_permissions(member_or_role, overwrite=None)
+            
+            # Add the target role with full permissions
+            await channel.set_permissions(
+                target_role,
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                manage_messages=True,
+            )
+            
+            # Send notification embed
+            forward_embed = discord.Embed(
+                title="↗️ Ticket Forwarded",
+                description=f"This ticket has been forwarded to {target_role.mention}.",
+                colour=0xF39C12,
+                timestamp=datetime.now(timezone.utc),
+            )
+            forward_embed.add_field(name="Forwarded By", value=interaction.user.mention, inline=True)
+            
+            # Ping the role
+            await channel.send(content=target_role.mention, embed=forward_embed)
+            
+            # Log the forward action
+            await _send_ticket_log(
+                guild, colour=0xF39C12, title="↗️ Ticket Forwarded",
+                fields=[
+                    ("Channel", channel.mention, True),
+                    ("Forwarded To", target_role.mention, True),
+                    ("Forwarded By", interaction.user.mention, True),
+                ],
+            )
+            
+            await interaction.followup.send(f"✅ Ticket forwarded to {target_role.mention}.", ephemeral=True)
+        
+        except discord.Forbidden:
+            await interaction.followup.send("❌ I don't have permission to modify channel permissions.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"❌ An error occurred: {e}", ephemeral=True)
 
     @discord.ui.button(label="Add User", style=discord.ButtonStyle.secondary, emoji="➕", custom_id="ticket:adduser")
     async def add_user(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not _is_staff(interaction.user):
             return await interaction.response.send_message("❌ Only staff can add users.", ephemeral=True)
         await interaction.response.send_modal(AddUserModal(interaction.channel))
-
 
 class AddUserModal(discord.ui.Modal, title="Add User to Ticket"):
     user_id_input = discord.ui.TextInput(
@@ -261,32 +380,13 @@ class Tickets(commands.Cog):
         bot.add_view(OpenTicketView())
         bot.add_view(TicketControlView())
 
-    @app_commands.command(name="basic-ticket-panel", description="Post the basic ticket creation panel in this channel")
+    @app_commands.command(name="ticket-panel", description="Post the basic ticket creation panel in this channel")
     @has_any_role(HEAD_ADMIN_ROLE_ID)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 Support Tickets",
             description=(
                 "Need help or want to report something?\n\n"
-                "Click **Open a Ticket** below to create a private support channel.\n"
-                "Our staff team will assist you as soon as possible."
-            ),
-            colour=0x5865F2,
-        )
-        embed.set_footer(text=interaction.guild.name)
-        if interaction.guild.icon:
-            embed.set_thumbnail(url=interaction.guild.icon.url)
-
-        await interaction.channel.send(embed=embed, view=OpenTicketView())
-        await interaction.response.send_message("✅ Ticket panel posted.", ephemeral=True)
-    
-    @app_commands.command(name="cc-ticket-panel", description="Post the content creator ticket creation panel in this channel")
-    @has_any_role(HEAD_ADMIN_ROLE_ID)
-    async def ticket_panel(self, interaction: discord.Interaction):
-        embed = discord.Embed(
-            title="🎥 Content Creator Tickets",
-            description=(
-                "Wish to apply for the content creator role?\n\n"
                 "Click **Open a Ticket** below to create a private support channel.\n"
                 "Our staff team will assist you as soon as possible."
             ),

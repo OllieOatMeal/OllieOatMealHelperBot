@@ -1,3 +1,23 @@
+"""
+cogs/music.py
+──────────────
+Music playback via YouTube (yt-dlp + FFmpeg).
+Users must be in a voice channel to use music commands.
+Blacklisted users (see cogs/blacklist.py) are blocked from all music commands.
+
+Commands:
+  /play    — Search YouTube or play a URL
+  /skip    — Skip the current track
+  /stop    — Stop playback and clear the queue
+  /pause   — Pause / resume playback
+  /queue   — Display the current queue
+  /volume  — Adjust playback volume (0–200)
+  /nowplaying — Show the currently playing track
+  /leave   — Disconnect the bot from voice
+
+Requires: yt-dlp and FFmpeg installed on the host machine.
+"""
+
 import asyncio
 import os
 import random
@@ -7,7 +27,7 @@ import discord
 import yt_dlp
 from discord import app_commands
 from discord.ext import commands
-from config import STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+from config import STAFF_ROLE_ID, TRAINEE_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
 from cogs.blacklist import is_blacklisted
 
 FFMPEG_PATH  = os.getenv("FFMPEG_PATH", "ffmpeg")
@@ -17,6 +37,7 @@ EMBED_COLOUR = 0x5865F2
 MUSIC_ROLE_IDS = (
     1117193408105164902,
     STAFF_ROLE_ID,
+    TRAINEE_ROLE_ID,
     ADMIN_ROLE_ID,
     HEAD_ADMIN_ROLE_ID,
     OWNER_ROLE_ID,
@@ -599,5 +620,3 @@ async def setup(bot: commands.Bot):
     cog = Music(bot)
     await bot.add_cog(cog)
     print("Music cog loaded")
-    for cmd in cog.walk_app_commands():
-        print(f"  - /{cmd.name}")

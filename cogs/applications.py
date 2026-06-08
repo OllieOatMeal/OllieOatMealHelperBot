@@ -31,8 +31,7 @@ from cogs.blacklist import is_blacklisted
 from config import (
     has_any_role,
     ADMIN_ROLE_ID, STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID,
-    MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID,
-    STAFF_APPLICATION_LOG_CHANNEL_NAME, STAFF_APPLICATION_PING_ROLE_ID,
+    MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID
 )
 
 # ── Persistent storage ────────────────────────────────────────────────────────
@@ -51,7 +50,7 @@ def _load_apps() -> dict:
             data["open"] = {}
         return data
     except (FileNotFoundError, json.JSONDecodeError):
-        return {"member": _default_member_apps(), "staff": _default_staff_apps(), "open": {}}
+        return {"member": _default_member_apps(), "open": {}}
 
 def _is_open(app_id: str) -> bool:
     """Return True if an application is open (default: True)."""
@@ -99,9 +98,6 @@ def _default_member_apps() -> list:
         },
     ]
 
-def _default_staff_apps() -> list:
-    return []
-
 def get_apps(panel: str) -> list:
     return _load_apps().get(panel, [])
 
@@ -112,11 +108,11 @@ def get_app_by_id(panel: str, app_id: str) -> dict | None:
 # ── Log channel helpers ───────────────────────────────────────────────────────
 
 async def _log_channel(guild: discord.Guild, panel: str) -> discord.TextChannel | None:
-    name = MEMBER_APPLICATION_LOG_CHANNEL_NAME if panel == "member" else STAFF_APPLICATION_LOG_CHANNEL_NAME
+    name = MEMBER_APPLICATION_LOG_CHANNEL_NAME
     return discord.utils.get(guild.text_channels, name=name)
 
 def _ping_role_id(panel: str) -> int:
-    return MEMBER_APPLICATION_PING_ROLE_ID if panel == "member" else STAFF_APPLICATION_PING_ROLE_ID
+    return MEMBER_APPLICATION_PING_ROLE_ID
 
 
 # ══════════════════════════════════════════════════════════════════════════════
