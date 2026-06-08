@@ -56,6 +56,7 @@ async def load_cogs():
         "cogs.music",         # Music playback commands
         "cogs.blacklist",     # Per-system user blacklisting
         "cogs.utility",       # General utility commands (.support, staff ranks)
+        "cogs.modmail",       # Modmail system
     ]
 
     print("Loading cogs...")
