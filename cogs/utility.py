@@ -140,7 +140,7 @@ class Utility(commands.Cog):
 
         await member.remove_roles(role,reason="Command")
         await interaction.followup.send(
-            f"✅ {member.mention} has been given {role.mention}.",
+            f"✅ {member.mention} has had removed {role.mention}.",
             ephemeral=True,
         )
 
