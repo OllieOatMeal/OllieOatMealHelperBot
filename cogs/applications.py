@@ -34,6 +34,13 @@ from config import (
     MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID
 )
 
+LEVEL_ROLE_IDS = [
+    1117194557554167900,
+    1117194754493526156,
+    1117195060551876741,
+    1117195277036695635
+]
+
 # ── Persistent storage ────────────────────────────────────────────────────────
 
 DATA_DIR  = "data"
@@ -393,6 +400,7 @@ def _make_panel_view(panel: str) -> discord.ui.View:
                     return await interaction.response.send_message(
                         "🚫 You are blacklisted from submitting applications.", ephemeral=True
                     )
+                if await @has_any_role(LEVEL_ROLE_IDS):
                 cfg = get_app_by_id(p, a["id"])
                 if not cfg:
                     return await interaction.response.send_message("❌ Application type not found.", ephemeral=True)

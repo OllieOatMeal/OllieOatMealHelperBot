@@ -100,6 +100,50 @@ class Utility(commands.Cog):
 
         await interaction.response.send_message(embed=embed)
 
+    # ── /rolegive ──────────────────────────────────────────────────────────────
+
+    @app_commands.command(name="rolegive", description="Give a role to a certain user")
+    @app_commands.describe(
+        member="The member to give the role to",
+        role="The role to give the member",
+    )
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    async def rolegive(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        role: discord.Role,
+    ):
+        await interaction.response.defer(ephemeral=True)
+
+        await member.add_roles(role,reason="Command")
+        await interaction.followup.send(
+            f"✅ {member.mention} has been given {role.mention}.",
+            ephemeral=True,
+        )
+
+    # ── /roleremove ──────────────────────────────────────────────────────────────
+
+    @app_commands.command(name="roleremove", description="Removes a role from a certain user")
+    @app_commands.describe(
+        member="The member to remove the role from",
+        role="The role to remove from the member",
+    )
+    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    async def rolegive(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        role: discord.Role,
+    ):
+        await interaction.response.defer(ephemeral=True)
+
+        await member.remove_roles(role,reason="Command")
+        await interaction.followup.send(
+            f"✅ {member.mention} has been given {role.mention}.",
+            ephemeral=True,
+        )
+
     # ── /promote ──────────────────────────────────────────────────────────────
 
     @app_commands.command(name="promote", description="Promote a staff member to the next rank")
