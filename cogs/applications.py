@@ -20,6 +20,8 @@
 
 import json
 import os
+import asyncio
+from discord import HTTPException
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -584,6 +586,8 @@ class Applications(commands.Cog):
     @app_commands.describe(user="The user to DM", message="The message to send")
     @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
     async def dm_user(self, interaction: discord.Interaction, user: discord.Member, message: str):
+        await interaction.response.defer(ephemeral=True)  # ← defer first, DM can be slow
+
         embed = discord.Embed(
             title=f"📬 Message from {interaction.guild.name}",
             description=message,
@@ -595,8 +599,10 @@ class Applications(commands.Cog):
             embed.set_thumbnail(url=interaction.guild.icon.url)
 
         try:
-            await user.send(embed=embed)
-            await interaction.response.send_message(
+            dm_channel = await user.create_dm()   # ← explicitly create/fetch the DM channel
+            await asyncio.sleep(1)                # ← small delay to avoid 40003
+            await dm_channel.send(embed=embed)
+            await interaction.followup.send(
                 embed=discord.Embed(
                     title="✅ DM Sent",
                     description=f"Message delivered to {user.mention}.",
@@ -605,8 +611,12 @@ class Applications(commands.Cog):
                 ephemeral=True,
             )
         except discord.Forbidden:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"❌ Could not DM {user.mention} — they may have DMs disabled.", ephemeral=True
+            )
+        except HTTPException as e:
+            await interaction.followup.send(
+                f"❌ Failed to send DM: {e.text}", ephemeral=True
             )
 
     # ── /app-builder ──────────────────────────────────────────────────────────
