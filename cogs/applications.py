@@ -400,17 +400,22 @@ def _make_panel_view(panel: str) -> discord.ui.View:
                     return await interaction.response.send_message(
                         "🚫 You are blacklisted from submitting applications.", ephemeral=True
                     )
-                if await @has_any_role(LEVEL_ROLE_IDS):
+                member_role_ids = {role.id for role in interaction.user.roles}
+                if not member_role_ids.intersection(LEVEL_ROLE_IDS):
+                    return await interaction.response.send_message(
+                        "❌ You don't have the required role to apply.", ephemeral=True
+                    )
                 cfg = get_app_by_id(p, a["id"])
                 if not cfg:
-                    return await interaction.response.send_message("❌ Application type not found.", ephemeral=True)
+                    return await interaction.response.send_message(
+                        "❌ Application type not found.", ephemeral=True
+                    )
                 await interaction.response.send_modal(build_modal(cfg, interaction.user, p))
             return callback
 
         btn.callback = make_cb()
         view.add_item(btn)
     return view
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # App Builder Modals
