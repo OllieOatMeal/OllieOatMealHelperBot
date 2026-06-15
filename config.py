@@ -1,15 +1,30 @@
 import discord
 from discord import app_commands
 
-# ── Role IDs ──────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# ROLE IDs
 # Replace these with the actual role IDs from your Discord server.
-OWNER_ROLE_ID          = 1117190277522804826
-MANAGER_ROLE_ID        = 1117190624853110925
-HEAD_ADMIN_ROLE_ID     = 1117190992316076082
-ADMIN_ROLE_ID          = 1117191230485438584
-STAFF_ROLE_ID          = 1117193288051601508
-TICKET_SUPPORT_ROLE_ID = 1117196652994904154
-HELPER_ROLE_ID         = 1117196806309298246
+# ══════════════════════════════════════════════════════════════════════════════
+ROLES = {
+    "OWNER":           1117190277522804826,
+    "MANAGER":         1117190624853110925,
+    "HEAD_ADMIN":      1117190992316076082,
+    "ADMIN":           1117191230485438584,
+    "STAFF":           1117193288051601508,
+    "TICKET_SUPPORT":  1117196652994904154,
+    "HELPER":          1117196806309298246,
+    "MUSIC_DJ":        1117193408105164902,   # role that can use music commands
+}
+
+# Shorthand aliases so the rest of the code stays readable
+OWNER_ROLE_ID          = ROLES["OWNER"]
+MANAGER_ROLE_ID        = ROLES["MANAGER"]
+HEAD_ADMIN_ROLE_ID     = ROLES["HEAD_ADMIN"]
+ADMIN_ROLE_ID          = ROLES["ADMIN"]
+STAFF_ROLE_ID          = ROLES["STAFF"]
+TICKET_SUPPORT_ROLE_ID = ROLES["TICKET_SUPPORT"]
+HELPER_ROLE_ID         = ROLES["HELPER"]
+MUSIC_DJ_ROLE_ID       = ROLES["MUSIC_DJ"]
 
 # Ordered list used for rank comparisons (lowest → highest)
 STAFF_RANK_ORDER = [
@@ -31,30 +46,189 @@ STAFF_RANK_NAMES = {
     OWNER_ROLE_ID:      "Owner",
 }
 
-# ── Log channels ──────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# COMMAND NAMES
+# Change any value here to rename a slash command across the whole bot.
+# ══════════════════════════════════════════════════════════════════════════════
+CMD = {
+    # info_commands
+    "post_rules":               "post-rules",
+    "post_roles":               "post-roles",
+
+    # utility
+    "support":                  "support",
+    "rolegive":                 "rolegive",
+    "roleremove":               "roleremove",
+    "promote":                  "promote",
+    "demote":                   "demote",
+    "staffrank":                "staffrank",
+
+    # moderation
+    "ban":                      "ban",
+    "unban":                    "unban",
+    "kick":                     "kick",
+    "mute":                     "mute",
+    "unmute":                   "unmute",
+    "warn":                     "warn",
+    "warnings":                 "warnings",
+    "clearwarns":               "clearwarns",
+    "purge":                    "purge",
+    "lock":                     "lock",
+    "unlock":                   "unlock",
+    "slowmode":                 "slowmode",
+    "nick":                     "nick",
+
+    # embeds  (group name + subcommands)
+    "embed":                    "embed",
+    "embed_simple":             "simple",
+    "embed_builder":            "builder",
+    "embed_announce":           "announce",
+    "embed_rules":              "rules",
+    "embed_edit":               "edit",
+
+    # applications
+    "member_application_panel": "member-application-panel",
+    "staff_application_panel":  "staff-application-panel",
+    "dm":                       "dm",
+    "app_builder":              "app-builder",
+    "app_builder_list":         "list",
+    "app_builder_create":       "create",
+    "app_builder_delete":       "delete",
+    "app_builder_edit_roles":   "edit-roles",
+    "app_builder_open":         "open",
+    "app_builder_close":        "close",
+    "app_builder_status":       "status",
+
+    # blacklist (group name + subcommands)
+    "blacklist":                "blacklist",
+    "blacklist_add":            "add",
+    "blacklist_remove":         "remove",
+    "blacklist_check":          "check",
+    "blacklist_list":           "list",
+
+    # tickets
+    "ticket_panel":             "ticket-panel",
+    "ticket_close":             "ticket-close",
+
+    # logging
+    "setlogchannel":            "setlogchannel",
+
+    # reaction roles (group + subcommands)
+    "reactionrole":             "reactionrole",
+    "rr_add":                   "add",
+    "rr_create":                "create",
+    "rr_edit":                  "edit",
+    "rr_remove":                "remove",
+    "rr_list":                  "list",
+
+    # music
+    "play":                     "play",
+    "music_panel":              "music-panel",
+    "stop":                     "stop",
+    "queue":                    "queue",
+    "skip":                     "skip",
+    "pause":                    "pause",
+    "resume":                   "resume",
+    "volume":                   "volume",
+    "shuffle":                  "shuffle",
+    "loop":                     "loop",
+    "leave":                    "leave",
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# COMMAND PERMISSIONS
+# Each key is a CMD key; value is a tuple of role IDs that can run it.
+# Roles higher in STAFF_RANK_ORDER do NOT automatically inherit lower perms —
+# list every role that should have access.
+# ══════════════════════════════════════════════════════════════════════════════
+PERMS = {
+    # info_commands
+    "post_rules":               (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "post_roles":               (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # utility
+    "support":                  (STAFF_ROLE_ID, HELPER_ROLE_ID),
+    "rolegive":                 (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "roleremove":               (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "promote":                  (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "demote":                   (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    # staffrank has no permission check (visible to everyone)
+
+    # moderation
+    "ban":                      (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "unban":                    (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "kick":                     (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "mute":                     (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "unmute":                   (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "warn":                     (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "warnings":                 (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "clearwarns":               (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "purge":                    (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "lock":                     (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "unlock":                   (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "slowmode":                 (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "nick":                     (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # embeds — all subcommands share the same permission
+    "embed":                    (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # applications
+    "member_application_panel": (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "staff_application_panel":  (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "dm":                       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "app_builder":              (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    # app-builder subcommands that differ from the group default:
+    "app_builder_status":       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # blacklist
+    "blacklist":                (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # tickets
+    "ticket_panel":             (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "ticket_close":             (TICKET_SUPPORT_ROLE_ID,),
+
+    # logging
+    "setlogchannel":            (OWNER_ROLE_ID,),
+
+    # music — controlled by MUSIC_DJ_ROLE_ID + staff (see music.py)
+    "music":                    (MUSIC_DJ_ROLE_ID, STAFF_ROLE_ID, ADMIN_ROLE_ID,
+                                 HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "music_panel":              (MANAGER_ROLE_ID, OWNER_ROLE_ID),
+
+    # reaction roles — all subcommands share same permission
+    "reactionrole":             (OWNER_ROLE_ID,),
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LOG CHANNELS
+# ══════════════════════════════════════════════════════════════════════════════
 LOG_CHANNEL_NAME    = "logs"
 LOG_CHANNEL_ID      = 1117368916528865413
 
 MOD_LOG_CHANNEL_NAME = "mod-logs"
 MOD_LOG_CHANNEL_ID   = 1117369107898179644
 
-# Channel where staff promotions/demotions are announced
 RANK_CHANGES_CHANNEL_NAME = "rank-changes"
 RANK_CHANGES_CHANNEL_ID   = 1513298605270761592
 
-# ── Ticket system ─────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# TICKET SYSTEM
+# ══════════════════════════════════════════════════════════════════════════════
 TICKET_CATEGORY_NAME    = "🎫| TICKETS"
 TICKET_LOG_CHANNEL_NAME = "ticket-logs"
 
-# ── Application system ────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# APPLICATION SYSTEM
+# ══════════════════════════════════════════════════════════════════════════════
 MEMBER_APPLICATION_LOG_CHANNEL_NAME = "application-logs"
 MEMBER_APPLICATION_PING_ROLE_ID     = MANAGER_ROLE_ID, OWNER_ROLE_ID
 
 # STAFF_APPLICATION_LOG_CHANNEL_NAME  = "promotion-applications"
 # STAFF_APPLICATION_PING_ROLE_ID      = OWNER_ROLE_ID
 
-# ── Support command ───────────────────────────────────────────────────────────
-# Customise the text/links shown when someone runs /support.
+# ══════════════════════════════════════════════════════════════════════════════
+# SUPPORT COMMAND TEXT
+# ══════════════════════════════════════════════════════════════════════════════
 FAQ_DESCRIPTION = (
     "Need help? Please review the FAQs:\n\n"
     "📖 **Read the FAQ** <#1199105336750129272> — check our pinned messages for common questions\n\n"
@@ -67,11 +241,14 @@ REPORT_DESCRIPTION = (
 SUPPORT_COLOUR = 0x5865F2  # Discord blurple
 
 
-# ── Reusable role check ───────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# REUSABLE ROLE CHECK
+# ══════════════════════════════════════════════════════════════════════════════
 def has_any_role(*role_ids: int):
     """
     Slash-command check decorator.
     Raises CheckFailure if the invoking user has none of the given role IDs.
+    Usage:  @has_any_role(*PERMS["ban"])
     """
     async def predicate(interaction: discord.Interaction) -> bool:
         user_role_ids = {r.id for r in interaction.user.roles}

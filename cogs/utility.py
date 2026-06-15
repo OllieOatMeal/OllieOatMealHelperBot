@@ -14,8 +14,7 @@ from discord import app_commands
 from datetime import datetime, timezone
 
 from config import (
-    has_any_role,
-    OWNER_ROLE_ID, MANAGER_ROLE_ID, HEAD_ADMIN_ROLE_ID, STAFF_ROLE_ID, HELPER_ROLE_ID,
+    has_any_role, CMD, PERMS,
     STAFF_RANK_ORDER, STAFF_RANK_NAMES,
     REPORT_DESCRIPTION, SUPPORT_COLOUR,FAQ_DESCRIPTION,
     RANK_CHANGES_CHANNEL_ID, RANK_CHANGES_CHANNEL_NAME,
@@ -60,8 +59,8 @@ class Utility(commands.Cog):
 
     # ── /support ──────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="support", description="Show users how to report someone")
-    @has_any_role(STAFF_ROLE_ID, HELPER_ROLE_ID)
+    @app_commands.command(name=CMD["support"], description="Show users how to report someone")
+    @has_any_role(*PERMS["support"])
     async def support(self, interaction: discord.Interaction):
         """
         Posts a public embed explaining the process to report a user.
@@ -81,8 +80,8 @@ class Utility(commands.Cog):
 
     # ── /faq ──────────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="support", description="Show users how to ask questions")
-    @has_any_role(STAFF_ROLE_ID, HELPER_ROLE_ID)
+    @app_commands.command(name=CMD["support"], description="Show users how to ask questions")
+    @has_any_role(*PERMS["support"])
     async def support(self, interaction: discord.Interaction):
         """
         Posts a public embed explaining the faq channel available.
@@ -102,12 +101,12 @@ class Utility(commands.Cog):
 
     # ── /rolegive ──────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="rolegive", description="Give a role to a certain user")
+    @app_commands.command(name=CMD["rolegive"], description="Give a role to a certain user")
     @app_commands.describe(
         member="The member to give the role to",
         role="The role to give the member",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["rolegive"])
     async def rolegive(
         self,
         interaction: discord.Interaction,
@@ -124,12 +123,12 @@ class Utility(commands.Cog):
 
     # ── /roleremove ──────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="roleremove", description="Removes a role from a certain user")
+    @app_commands.command(name=CMD["roleremove"], description="Removes a role from a certain user")
     @app_commands.describe(
         member="The member to remove the role from",
         role="The role to remove from the member",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["roleremove"])
     async def rolegive(
         self,
         interaction: discord.Interaction,
@@ -146,12 +145,12 @@ class Utility(commands.Cog):
 
     # ── /promote ──────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="promote", description="Promote a staff member to the next rank")
+    @app_commands.command(name=CMD["promote"], description="Promote a staff member to the next rank")
     @app_commands.describe(
         member="The staff member to promote",
         reason="Reason for the promotion (shown in the announcement)",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["promote"])
     async def promote(
         self,
         interaction: discord.Interaction,
@@ -249,12 +248,12 @@ class Utility(commands.Cog):
 
     # ── /demote ───────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="demote", description="Demote a staff member to the previous rank")
+    @app_commands.command(name=CMD["demote"], description="Demote a staff member to the previous rank")
     @app_commands.describe(
         member="The staff member to demote",
         reason="Reason for the demotion (shown in the announcement)",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["demote"])
     async def demote(
         self,
         interaction: discord.Interaction,
@@ -352,7 +351,7 @@ class Utility(commands.Cog):
 
     # ── /staffrank ────────────────────────────────────────────────────────────
 
-    @app_commands.command(name="staffrank", description="Check a member's current staff rank")
+    @app_commands.command(name=CMD["staffrank"], description="Check a member's current staff rank")
     @app_commands.describe(member="The member to check (leave blank for yourself)")
     async def staffrank(self, interaction: discord.Interaction, member: discord.Member = None):
         """Shows the staff rank (if any) of the specified member, or yourself."""

@@ -25,7 +25,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from config import has_any_role, STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID
+from config import has_any_role, CMD, PERMS
 
 
 DATA_DIR = "data"
@@ -63,17 +63,17 @@ class Blacklist(commands.Cog):
         self.bot = bot
 
     blacklist_group = app_commands.Group(
-        name="blacklist",
+        name=CMD["blacklist"],
         description="Manage user blacklists for music, tickets, and applications",
     )
 
-    @blacklist_group.command(name="add", description="Blacklist a user from a system")
+    @blacklist_group.command(name=CMD["blacklist_add"], description="Blacklist a user from a system")
     @app_commands.describe(
         user="The user to blacklist",
         system="Which system to blacklist them from",
         reason="Reason for the blacklist",
     )
-    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["blacklist"])
     async def blacklist_add(
         self,
         interaction: discord.Interaction,
@@ -123,12 +123,12 @@ class Blacklist(commands.Cog):
         except discord.Forbidden:
             pass
 
-    @blacklist_group.command(name="remove", description="Remove a user from a blacklist")
+    @blacklist_group.command(name=CMD["blacklist_remove"], description="Remove a user from a blacklist")
     @app_commands.describe(
         user="The user to unblacklist",
         system="Which system to remove them from",
     )
-    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["blacklist"])
     async def blacklist_remove(
         self,
         interaction: discord.Interaction,
@@ -171,9 +171,9 @@ class Blacklist(commands.Cog):
         except discord.Forbidden:
             pass
 
-    @blacklist_group.command(name="check", description="Check all blacklists for a user")
+    @blacklist_group.command(name=CMD["blacklist_check"], description="Check all blacklists for a user")
     @app_commands.describe(user="The user to check")
-    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["blacklist"])
     async def blacklist_check(self, interaction: discord.Interaction, user: discord.Member):
         embed = discord.Embed(
             title=f"🔍 Blacklist Check — {user}",
@@ -201,9 +201,9 @@ class Blacklist(commands.Cog):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @blacklist_group.command(name="list", description="List all blacklisted users for a system")
+    @blacklist_group.command(name=CMD["blacklist_list"], description="List all blacklisted users for a system")
     @app_commands.describe(system="Which system to list blacklisted users for")
-    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["blacklist"])
     async def blacklist_list(
         self,
         interaction: discord.Interaction,

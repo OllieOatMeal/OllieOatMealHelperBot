@@ -21,7 +21,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timezone
-from config import has_any_role, OWNER_ROLE_ID, LOG_CHANNEL_NAME, LOG_CHANNEL_ID as _LOG_CHANNEL_ID
+from config import has_any_role, CMD, PERMS, LOG_CHANNEL_NAME, LOG_CHANNEL_ID as _LOG_CHANNEL_ID
 
 _log_channel_id = _LOG_CHANNEL_ID
 
@@ -302,8 +302,8 @@ class Logging(commands.Cog):
             ],
         )
 
-    @app_commands.command(name="setlogchannel", description="Set the channel where logs are sent")
-    @has_any_role(OWNER_ROLE_ID)
+    @app_commands.command(name=CMD["setlogchannel"], description="Set the channel where logs are sent")
+    @has_any_role(*PERMS["setlogchannel"])
     async def set_log_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         global _log_channel_id
         _log_channel_id = channel.id

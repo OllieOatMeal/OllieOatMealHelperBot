@@ -9,15 +9,15 @@ from discord import app_commands
 from discord.ext import commands
 from datetime import datetime, timezone
 
-from config import has_any_role, MANAGER_ROLE_ID, OWNER_ROLE_ID
+from config import has_any_role, CMD, PERMS
 
 
 class InfoCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="post-rules", description="Post the server rules embed in this channel")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @app_commands.command(name=CMD["post_rules"], description="Post the server rules embed in this channel")
+    @has_any_role(*PERMS["post_rules"])
     async def post_rules(self, interaction: discord.Interaction):
         guild = interaction.guild
 
@@ -61,8 +61,8 @@ class InfoCommands(commands.Cog):
         await interaction.channel.send(embed=embed)
         await interaction.response.send_message("✅ Rules posted.", ephemeral=True)
 
-    @app_commands.command(name="post-roles", description="Post the server roles embed in this channel")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @app_commands.command(name=CMD["post_roles"], description="Post the server roles embed in this channel")
+    @has_any_role(*PERMS["post_roles"])
     async def post_roles(self, interaction: discord.Interaction):
         guild = interaction.guild
 

@@ -27,21 +27,14 @@ import discord
 import yt_dlp
 from discord import app_commands
 from discord.ext import commands
-from config import STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID
+from config import CMD, PERMS, MUSIC_DJ_ROLE_ID
 from cogs.blacklist import is_blacklisted
 
 FFMPEG_PATH  = os.getenv("FFMPEG_PATH", "ffmpeg")
 EMBED_COLOUR = 0x5865F2
 
 
-MUSIC_ROLE_IDS = (
-    1117193408105164902,
-    STAFF_ROLE_ID,
-    ADMIN_ROLE_ID,
-    HEAD_ADMIN_ROLE_ID,
-    MANAGER_ROLE_ID,
-    OWNER_ROLE_ID,
-)
+MUSIC_ROLE_IDS = PERMS["music"]
 
 def user_has_music_role(member: discord.Member) -> bool:
     member_role_ids = {r.id for r in member.roles}
@@ -380,7 +373,7 @@ class Music(commands.Cog):
         await set_vc_status(state.voice_channel, f"🎵 {track['title']}")
         await self._update_panel(guild)
 
-    @app_commands.command(name="play", description="Play a song from YouTube (search term or URL)")
+    @app_commands.command(name=CMD["play"], description="Play a song from YouTube (search term or URL)")
     @app_commands.describe(query="Song name or YouTube URL")
     @music_only()
     async def play(self, interaction: discord.Interaction, query: str):
@@ -454,7 +447,7 @@ class Music(commands.Cog):
             print(f"[music] followup FAILED: {e}")
 
 
-    @app_commands.command(name="music-panel", description="Re-post the music panel in this channel")
+    @app_commands.command(name=CMD["music_panel"], description="Re-post the music panel in this channel")
     @music_only()
     async def panel(self, interaction: discord.Interaction):
         print(f"[music] /panel called by {interaction.user}")
@@ -483,7 +476,7 @@ class Music(commands.Cog):
         except Exception as e:
             print(f"[music] /panel followup FAILED: {e}")
 
-    @app_commands.command(name="stop", description="Stop playback and leave voice")
+    @app_commands.command(name=CMD["stop"], description="Stop playback and leave voice")
     @music_only()
     async def stop(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -499,7 +492,7 @@ class Music(commands.Cog):
         await self._update_panel(interaction.guild)
         await interaction.followup.send("⏹ Stopped and disconnected.", ephemeral=True)
 
-    @app_commands.command(name="queue", description="Show the current queue")
+    @app_commands.command(name=CMD["queue"], description="Show the current queue")
     async def queue_cmd(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild_id)
         if not state.queue and not state.current:
@@ -523,7 +516,7 @@ class Music(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-    @app_commands.command(name="skip", description="Skip the current track")
+    @app_commands.command(name=CMD["skip"], description="Skip the current track")
     @music_only()
     async def skip(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
@@ -533,7 +526,7 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
-    @app_commands.command(name="pause", description="Pause playback")
+    @app_commands.command(name=CMD["pause"], description="Pause playback")
     @music_only()
     async def pause(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
@@ -544,7 +537,7 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("Nothing is playing.", ephemeral=True)
 
-    @app_commands.command(name="resume", description="Resume playback")
+    @app_commands.command(name=CMD["resume"], description="Resume playback")
     @music_only()
     async def resume(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client
@@ -556,7 +549,7 @@ class Music(commands.Cog):
             await interaction.response.send_message("Not paused.", ephemeral=True)
 
 
-    @app_commands.command(name="volume", description="Set volume (0–200)")
+    @app_commands.command(name=CMD["volume"], description="Set volume (0–200)")
     @app_commands.describe(level="Volume level from 0 to 200")
     @music_only()
     async def volume(self, interaction: discord.Interaction, level: app_commands.Range[int, 0, 200]):
@@ -569,7 +562,7 @@ class Music(commands.Cog):
         await self._update_panel(interaction.guild)
 
 
-    @app_commands.command(name="shuffle", description="Toggle shuffle mode")
+    @app_commands.command(name=CMD["shuffle"], description="Toggle shuffle mode")
     @music_only()
     async def shuffle_cmd(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild_id)
@@ -580,7 +573,7 @@ class Music(commands.Cog):
         await self._update_panel(interaction.guild)
 
 
-    @app_commands.command(name="loop", description="Toggle loop mode")
+    @app_commands.command(name=CMD["loop"], description="Toggle loop mode")
     @music_only()
     async def loop_cmd(self, interaction: discord.Interaction):
         state = self.get_state(interaction.guild_id)
@@ -591,7 +584,7 @@ class Music(commands.Cog):
         await self._update_panel(interaction.guild)
 
 
-    @app_commands.command(name="leave", description="Leave voice channel")
+    @app_commands.command(name=CMD["leave"], description="Leave voice channel")
     @music_only()
     async def leave(self, interaction: discord.Interaction):
         vc = interaction.guild.voice_client

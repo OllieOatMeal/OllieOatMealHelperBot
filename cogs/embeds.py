@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timezone
-from config import has_any_role, MANAGER_ROLE_ID, OWNER_ROLE_ID
+from config import has_any_role, CMD, PERMS
 
 
 def parse_colour(colour_str: str) -> int:
@@ -93,16 +93,16 @@ class Embeds(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    embed_group = app_commands.Group(name="embed", description="Create and manage embeds")
+    embed_group = app_commands.Group(name=CMD["embed"], description="Create and manage embeds")
 
-    @embed_group.command(name="simple", description="Send a simple embed quickly")
+    @embed_group.command(name=CMD["embed_simple"], description="Send a simple embed quickly")
     @app_commands.describe(
         channel="Channel to send the embed to", title="Embed title", description="Embed description",
         colour="Hex colour (e.g. ff5733)", footer="Optional footer text",
         thumbnail="Optional thumbnail URL", image="Optional image URL",
         ping_role="Optional role to ping alongside the embed",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["embed"])
     async def embed_simple(
         self,
         interaction: discord.Interaction,
@@ -122,15 +122,15 @@ class Embeds(commands.Cog):
         await channel.send(content=ping_role.mention if ping_role else None, embed=embed)
         await interaction.response.send_message(f"✅ Embed sent to {channel.mention}!", ephemeral=True)
 
-    @embed_group.command(name="builder", description="Open an interactive embed builder")
+    @embed_group.command(name=CMD["embed_builder"], description="Open an interactive embed builder")
     @app_commands.describe(channel="Channel to send the finished embed to")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["embed"])
     async def embed_builder(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await interaction.response.send_modal(EmbedBuilderModal(channel))
 
-    @embed_group.command(name="announce", description="Send a pre-styled announcement embed")
+    @embed_group.command(name=CMD["embed_announce"], description="Send a pre-styled announcement embed")
     @app_commands.describe(channel="Channel to announce in", title="Announcement title", message="Announcement body", ping_role="Role to ping (optional)")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["embed"])
     async def embed_announce(
         self,
         interaction: discord.Interaction,
@@ -146,13 +146,13 @@ class Embeds(commands.Cog):
         await channel.send(content=ping_role.mention if ping_role else None, embed=embed)
         await interaction.response.send_message(f"✅ Announcement sent to {channel.mention}!", ephemeral=True)
 
-    @embed_group.command(name="rules", description="Post a rules embed with numbered rules")
+    @embed_group.command(name=CMD["embed_rules"], description="Post a rules embed with numbered rules")
     @app_commands.describe(
         channel="Channel to post rules in", title="Rules title",
         rules="Rules separated by | (e.g. Be respectful|No spam|No NSFW)",
         footer="Optional footer text",
     )
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["embed"])
     async def embed_rules(
         self,
         interaction: discord.Interaction,
@@ -178,9 +178,9 @@ class Embeds(commands.Cog):
         await channel.send(embed=embed)
         await interaction.response.send_message(f"✅ Rules posted in {channel.mention}!", ephemeral=True)
 
-    @embed_group.command(name="edit", description="Edit an existing embed sent by this bot")
+    @embed_group.command(name=CMD["embed_edit"], description="Edit an existing embed sent by this bot")
     @app_commands.describe(channel="Channel containing the message", message_id="ID of the message to edit")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(*PERMS["embed"])
     async def embed_edit(self, interaction: discord.Interaction, channel: discord.TextChannel, message_id: str):
         try:
             mid     = int(message_id)

@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 
 from cogs.blacklist import is_blacklisted
 from config import (
-    has_any_role,
+    has_any_role, CMD, PERMS,
     TICKET_CATEGORY_NAME, TICKET_LOG_CHANNEL_NAME, TICKET_SUPPORT_ROLE_ID,
     MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME, MANAGER_ROLE_ID, OWNER_ROLE_ID, HEAD_ADMIN_ROLE_ID
 )
@@ -373,9 +373,9 @@ class Tickets(commands.Cog):
         bot.add_view(OpenTicketView())
         bot.add_view(TicketControlView())
 
-    @app_commands.command(name="ticket-panel", description="Post the basic ticket creation panel in this channel")
+    @app_commands.command(name=CMD["ticket_panel"], description="Post the basic ticket creation panel in this channel")
     async def ticket_panel(self, interaction: discord.Interaction):
-        if not any(r.id in (MANAGER_ROLE_ID, OWNER_ROLE_ID) for r in interaction.user.roles):
+        if not any(r.id in PERMS["ticket_panel"] for r in interaction.user.roles):
             await interaction.response.send_message("❌ You don't have permission to use this.", ephemeral=True)
             return
 
@@ -395,8 +395,8 @@ class Tickets(commands.Cog):
         await interaction.response.send_message("✅ Ticket panel posted.", ephemeral=True)
         await interaction.channel.send(embed=embed, view=OpenTicketView())
 
-    @app_commands.command(name="ticket-close", description="Force-close the current ticket channel")
-    @has_any_role(TICKET_SUPPORT_ROLE_ID)
+    @app_commands.command(name=CMD["ticket_close"], description="Force-close the current ticket channel")
+    @has_any_role(*PERMS["ticket_close"])
     async def ticket_close(self, interaction: discord.Interaction):
         if not interaction.channel.name.startswith("ticket-"):
             return await interaction.response.send_message(

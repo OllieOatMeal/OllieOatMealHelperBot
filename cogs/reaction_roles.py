@@ -38,7 +38,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from config import has_any_role, OWNER_ROLE_ID
+from config import has_any_role, CMD, PERMS, OWNER_ROLE_ID
 
 # ── Persistent storage ────────────────────────────────────────────────────────
 # Schema: { guild_id: { message_id: { emoji: { "add": [role_id,...], "remove": [role_id,...] } } } }
@@ -99,11 +99,11 @@ class ReactionRoles(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    rr_group = app_commands.Group(name="reactionrole", description="Manage reaction roles")
+    rr_group = app_commands.Group(name=CMD["reactionrole"], description="Manage reaction roles")
 
     # ── /reactionrole add ─────────────────────────────────────────────────────
 
-    @rr_group.command(name="add", description="Attach a reaction role to an existing message")
+    @rr_group.command(name=CMD["rr_add"], description="Attach a reaction role to an existing message")
     @app_commands.describe(
         channel="The channel containing the message",
         message_id="ID of the message",
@@ -111,7 +111,7 @@ class ReactionRoles(commands.Cog):
         roles_to_add="Roles to ADD when reacted (comma-separated IDs or mentions, leave blank for none)",
         roles_to_remove="Roles to REMOVE when reacted (comma-separated IDs or mentions, leave blank for none)",
     )
-    @has_any_role(OWNER_ROLE_ID)
+    @has_any_role(*PERMS["reactionrole"])
     async def rr_add(
         self,
         interaction: discord.Interaction,
@@ -169,7 +169,7 @@ class ReactionRoles(commands.Cog):
 
     # ── /reactionrole create ──────────────────────────────────────────────────
 
-    @rr_group.command(name="create", description="Create a new embed and attach a reaction role to it")
+    @rr_group.command(name=CMD["rr_create"], description="Create a new embed and attach a reaction role to it")
     @app_commands.describe(
         channel="Channel to post the embed in",
         title="Embed title",
@@ -179,7 +179,7 @@ class ReactionRoles(commands.Cog):
         roles_to_remove="Roles to REMOVE when reacted (comma-separated IDs or mentions, leave blank for none)",
         colour="Hex colour for the embed (e.g. ff5733)",
     )
-    @has_any_role(OWNER_ROLE_ID)
+    @has_any_role(*PERMS["reactionrole"])
     async def rr_create(
         self,
         interaction: discord.Interaction,
@@ -237,7 +237,7 @@ class ReactionRoles(commands.Cog):
 
     # ── /reactionrole edit ────────────────────────────────────────────────────
 
-    @rr_group.command(name="edit", description="Add or remove roles from an existing reaction role entry")
+    @rr_group.command(name=CMD["rr_edit"], description="Add or remove roles from an existing reaction role entry")
     @app_commands.describe(
         message_id="ID of the message",
         emoji="Emoji of the existing entry",
@@ -246,7 +246,7 @@ class ReactionRoles(commands.Cog):
         add_to_remove="Extra role IDs/mentions to add to the 'remove' list",
         remove_from_remove="Role IDs/mentions to remove from the 'remove' list",
     )
-    @has_any_role(OWNER_ROLE_ID)
+    @has_any_role(*PERMS["reactionrole"])
     async def rr_edit(
         self,
         interaction: discord.Interaction,
@@ -291,9 +291,9 @@ class ReactionRoles(commands.Cog):
 
     # ── /reactionrole remove ──────────────────────────────────────────────────
 
-    @rr_group.command(name="remove", description="Remove a reaction role entry entirely")
+    @rr_group.command(name=CMD["rr_remove"], description="Remove a reaction role entry entirely")
     @app_commands.describe(message_id="ID of the message", emoji="Emoji of the reaction role to remove")
-    @has_any_role(OWNER_ROLE_ID)
+    @has_any_role(*PERMS["reactionrole"])
     async def rr_remove(self, interaction: discord.Interaction, message_id: str, emoji: str):
         try:
             mid = int(message_id)
@@ -314,8 +314,8 @@ class ReactionRoles(commands.Cog):
 
     # ── /reactionrole list ────────────────────────────────────────────────────
 
-    @rr_group.command(name="list", description="List all active reaction roles in this server")
-    @has_any_role(OWNER_ROLE_ID)
+    @rr_group.command(name=CMD["rr_list"], description="List all active reaction roles in this server")
+    @has_any_role(*PERMS["reactionrole"])
     async def rr_list(self, interaction: discord.Interaction):
         data    = _load()
         guild_data = data.get(str(interaction.guild.id), {})
