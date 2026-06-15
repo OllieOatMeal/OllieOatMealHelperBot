@@ -76,11 +76,11 @@ class InfoCommands(commands.Cog):
         embed.add_field(
             name="👮 Staff Roles",
             value=(
-                "👑 **OllieOatMeal** — The server owner.\n"
-                "🔴 **Head Admin** — Head of the staff team, hand-picked by the owner.\n"
-                "🟠 **Admin** — Staff member who passed the trainee course.\n"
-                "🟡 **Trainee** — Passed the staff application and currently on trial.\n"
-                "🟢 **Staff** — A member of the staff team."
+                "**<@&1117190277522804826>** — The server owner.\n"
+                "**<@&1117190624853110925>** — Head of the staff team, hand-picked by the owner.\n"
+                "**<@&1117190992316076082>** — Staff member who passed the trainee course.\n"
+                "**<@&1117191230485438584>** — Passed the staff application and currently on trial.\n"
+                "**<@&1117193288051601508>** — A member of the staff team."
             ),
             inline=False,
         )
@@ -88,30 +88,30 @@ class InfoCommands(commands.Cog):
         embed.add_field(
             name="👥 Member Roles",
             value=(
-                "✅ **Member** — Standard role received after agreeing to the rules.\n"
-                "🎥 **Content Creator** — YouTube channel with 500+ subscribers. Apply via ticket.\n"
-                "🤝 **Helper** — Helped the community significantly. Hand-picked by Head Admin & Owner.\n"
-                "💜 **Supporter** — Boosted the server or contributed massively. Unlocks private channels.\n"
-                "👋 **Friend** — Knows OllieOatMeal in real life."
+                "**<@&1117193057918533662>** — Standard role received after agreeing to the rules.\n"
+                "**<@&1117387942592270367>** — YouTube channel with 500+ subscribers. Apply via ticket.\n"
+                "**<@&1117196806309298246>** — Helped the community significantly. Hand-picked by Head Admin & Owner.\n"
+                "**<@&1117192871888556134>** — Boosted the server or contributed massively. Unlocks private channels.\n"
+                "**<@&1117351974988419163>** — Knows OllieOatMeal in real life."
             ),
             inline=False,
         )
 
         embed.add_field(
             name="🎨 Colour Roles",
-            value="🔴 Red  •  🟠 Orange  •  🟡 Yellow  •  🟢 Green  •  🔵 Blue  •  🟣 Purple",
+            value="<@&1117192362100260874>  •  <@&1117192408694792282>  •  <@&1117192494132768870>  •  <@&1117192530912612542>  •  <@&1117192570318106687>  •  <@&1117192599430766642>",
             inline=False,
         )
 
         embed.add_field(
             name="⭐ Level Roles",
             value=(
-                "**Level 1** — Welcome to the server!\n"
-                "**Level 5** — Video in VCs + embed links.\n"
-                "**Level 10** — Attach files + use activities.\n"
-                "**Level 25** — External emojis & stickers.\n"
-                "**Level 50** — Add reactions.\n"
-                "**Level 100** — Internal/external soundboards + priority speaker."
+                "**<@&1117194084092760134>** — Welcome to the server!\n"
+                "**<@&1117194409453293682>** — Video in VCs + embed links.\n"
+                "**<@&1117194557554167900>** — Attach files + use activities.\n"
+                "**<@&1117194754493526156>** — External emojis & stickers.\n"
+                "**<@&1117195060551876741>** — Add reactions.\n"
+                "**<@&1117195277036695635>** — Internal/external soundboards + priority speaker."
             ),
             inline=False,
         )
@@ -119,10 +119,10 @@ class InfoCommands(commands.Cog):
         embed.add_field(
             name="🔔 Ping Roles",
             value=(
-                "**QOTD** — Notified for new Questions of the Day.\n"
-                "**Announcement** — Pinged for new announcements.\n"
-                "**New Emoji** — Pinged when a new emoji or sticker is added.\n"
-                "**Updates** — Pinged for Discord server updates."
+                "**<@&1117197840444313600>** — Notified for new Questions of the Day.\n"
+                "**<@&1117198075971252345>** — Pinged for new announcements.\n"
+                "**<@&1117198815938760804>** — Pinged when a new emoji or sticker is added.\n"
+                "**<@&1117198900319756318>** — Pinged for Discord server updates."
             ),
             inline=False,
         )
