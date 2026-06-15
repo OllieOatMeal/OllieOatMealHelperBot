@@ -374,7 +374,7 @@ class Tickets(commands.Cog):
         bot.add_view(TicketControlView())
 
     @app_commands.command(name="ticket-panel", description="Post the basic ticket creation panel in this channel")
-    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, O)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 Support Tickets",
@@ -389,8 +389,8 @@ class Tickets(commands.Cog):
         if interaction.guild.icon:
             embed.set_thumbnail(url=interaction.guild.icon.url)
 
-        await interaction.channel.send(embed=embed, view=OpenTicketView())
         await interaction.response.send_message("✅ Ticket panel posted.", ephemeral=True)
+        await interaction.channel.send(embed=embed, view=OpenTicketView())
 
     @app_commands.command(name="ticket-close", description="Force-close the current ticket channel")
     @has_any_role(TICKET_SUPPORT_ROLE_ID)
