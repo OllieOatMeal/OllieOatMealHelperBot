@@ -273,7 +273,7 @@ class TicketControlView(discord.ui.View):
 
         embed = discord.Embed(
             title="✋ Ticket Claimed",
-            description=f"This ticket is now being handled by {interaction.user.mention}.",
+            description=f"This ticket is now being handled by {interaction.user.mention}."s,
             colour=0x2ECC71,
             timestamp=datetime.now(timezone.utc),
         )
