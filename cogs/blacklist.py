@@ -25,7 +25,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from config import has_any_role, STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+from config import has_any_role, STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID
 
 
 DATA_DIR = "data"
@@ -73,7 +73,7 @@ class Blacklist(commands.Cog):
         system="Which system to blacklist them from",
         reason="Reason for the blacklist",
     )
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def blacklist_add(
         self,
         interaction: discord.Interaction,
@@ -128,7 +128,7 @@ class Blacklist(commands.Cog):
         user="The user to unblacklist",
         system="Which system to remove them from",
     )
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def blacklist_remove(
         self,
         interaction: discord.Interaction,
@@ -173,7 +173,7 @@ class Blacklist(commands.Cog):
 
     @blacklist_group.command(name="check", description="Check all blacklists for a user")
     @app_commands.describe(user="The user to check")
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def blacklist_check(self, interaction: discord.Interaction, user: discord.Member):
         embed = discord.Embed(
             title=f"🔍 Blacklist Check — {user}",
@@ -203,7 +203,7 @@ class Blacklist(commands.Cog):
 
     @blacklist_group.command(name="list", description="List all blacklisted users for a system")
     @app_commands.describe(system="Which system to list blacklisted users for")
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def blacklist_list(
         self,
         interaction: discord.Interaction,

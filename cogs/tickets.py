@@ -29,7 +29,7 @@ from cogs.blacklist import is_blacklisted
 from config import (
     has_any_role,
     TICKET_CATEGORY_NAME, TICKET_LOG_CHANNEL_NAME, TICKET_SUPPORT_ROLE_ID,
-    MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME, HEAD_ADMIN_ROLE_ID
+    MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME, MANAGER_ROLE_ID, OWNER_ROLE_ID, HEAD_ADMIN_ROLE_ID
 )
 
 _ticket_counter: dict[int, int] = {}
@@ -267,7 +267,9 @@ class ForwardRoleSelect(discord.ui.View):
         
         # Map selection to role ID
         role_map = {
-            "HEAD_ADMIN": HEAD_ADMIN_ROLE_ID
+            "Head Admin": HEAD_ADMIN_ROLE_ID,
+            "Management": MANAGER_ROLE_ID,
+            "Ownership": OWNER_ROLE_ID
         }
         
         selected_role_value = select.values[0]
@@ -295,7 +297,7 @@ class ForwardRoleSelect(discord.ui.View):
                         continue
                     if member_or_role.id == interaction.guild.me.id:
                         continue
-                    if member_or_role.id == HEAD_ADMIN_ROLE_ID:
+                    if member_or_role.id == MANAGER_ROLE_ID:
                         continue
                     await channel.set_permissions(member_or_role, overwrite=None)
             
@@ -381,7 +383,7 @@ class Tickets(commands.Cog):
         bot.add_view(TicketControlView())
 
     @app_commands.command(name="ticket-panel", description="Post the basic ticket creation panel in this channel")
-    @has_any_role(HEAD_ADMIN_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 Support Tickets",

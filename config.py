@@ -4,9 +4,9 @@ from discord import app_commands
 # ── Role IDs ──────────────────────────────────────────────────────────────────
 # Replace these with the actual role IDs from your Discord server.
 OWNER_ROLE_ID          = 1117190277522804826
-HEAD_ADMIN_ROLE_ID     = 1117190624853110925
-ADMIN_ROLE_ID          = 1117190992316076082
-TRAINEE_ROLE_ID        = 1117191230485438584
+MANAGER_ROLE_ID        = 1117190624853110925
+HEAD_ADMIN_ROLE_ID     = 1117190992316076082
+ADMIN_ROLE_ID          = 1117191230485438584
 STAFF_ROLE_ID          = 1117193288051601508
 TICKET_SUPPORT_ROLE_ID = 1117196652994904154
 HELPER_ROLE_ID         = 1117196806309298246
@@ -14,9 +14,10 @@ HELPER_ROLE_ID         = 1117196806309298246
 # Ordered list used for rank comparisons (lowest → highest)
 STAFF_RANK_ORDER = [
     HELPER_ROLE_ID,
-    TRAINEE_ROLE_ID,
+    STAFF_ROLE_ID,
     ADMIN_ROLE_ID,
     HEAD_ADMIN_ROLE_ID,
+    MANAGER_ROLE_ID,
     OWNER_ROLE_ID,
 ]
 
@@ -24,9 +25,9 @@ STAFF_RANK_ORDER = [
 STAFF_RANK_NAMES = {
     HELPER_ROLE_ID:     "Helper",
     STAFF_ROLE_ID:      "Staff",
-    TRAINEE_ROLE_ID:    "Trainee",
     ADMIN_ROLE_ID:      "Admin",
     HEAD_ADMIN_ROLE_ID: "Head Admin",
+    MANAGER_ROLE_ID:    "Manager",
     OWNER_ROLE_ID:      "Owner",
 }
 
@@ -47,7 +48,7 @@ TICKET_LOG_CHANNEL_NAME = "ticket-logs"
 
 # ── Application system ────────────────────────────────────────────────────────
 MEMBER_APPLICATION_LOG_CHANNEL_NAME = "application-logs"
-MEMBER_APPLICATION_PING_ROLE_ID     = HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+MEMBER_APPLICATION_PING_ROLE_ID     = MANAGER_ROLE_ID, OWNER_ROLE_ID
 
 # STAFF_APPLICATION_LOG_CHANNEL_NAME  = "promotion-applications"
 # STAFF_APPLICATION_PING_ROLE_ID      = OWNER_ROLE_ID

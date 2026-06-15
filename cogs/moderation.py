@@ -29,7 +29,7 @@ import re
 
 from config import (
     has_any_role,
-    OWNER_ROLE_ID, HEAD_ADMIN_ROLE_ID, ADMIN_ROLE_ID, STAFF_ROLE_ID,
+    OWNER_ROLE_ID, MANAGER_ROLE_ID, HEAD_ADMIN_ROLE_ID, STAFF_ROLE_ID,
     MOD_LOG_CHANNEL_ID, MOD_LOG_CHANNEL_NAME,
 )
 
@@ -98,7 +98,7 @@ class Moderation(commands.Cog):
         reason="Reason for the ban",
         delete_days="Days of messages to delete (0–7)",
     )
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def ban(
         self,
         interaction: discord.Interaction,
@@ -141,7 +141,7 @@ class Moderation(commands.Cog):
 
     @app_commands.command(name="unban", description="Unban a user by their Discord ID")
     @app_commands.describe(user_id="The user's ID to unban", reason="Reason for unban")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def unban(self, interaction: discord.Interaction, user_id: str, reason: str = "No reason provided"):
         try:
             uid = int(user_id)
@@ -251,7 +251,7 @@ class Moderation(commands.Cog):
 
     @app_commands.command(name="unmute", description="Remove timeout from a member")
     @app_commands.describe(member="Member to unmute", reason="Reason for removal")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def unmute(self, interaction: discord.Interaction, member: discord.Member, reason: str = "No reason provided"):
         # Passing None to timeout() removes any active timeout
         await member.timeout(None, reason=f"{interaction.user} | {reason}")
@@ -322,7 +322,7 @@ class Moderation(commands.Cog):
 
     @app_commands.command(name="clearwarns", description="Clear all warnings for a member")
     @app_commands.describe(member="Member to clear warnings for")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def clear_warnings(self, interaction: discord.Interaction, member: discord.Member):
         warnings[interaction.guild.id][member.id].clear()
         await interaction.response.send_message(
@@ -343,7 +343,7 @@ class Moderation(commands.Cog):
         amount="Number of messages to delete (1–500)",
         user="Only delete messages from this user (optional)",
     )
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def purge(
         self,
         interaction: discord.Interaction,
@@ -376,7 +376,7 @@ class Moderation(commands.Cog):
 
     @app_commands.command(name="lock", description="Lock this channel so @everyone cannot send messages")
     @app_commands.describe(reason="Reason for the lock")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def lock(self, interaction: discord.Interaction, reason: str = "No reason provided"):
         overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
         overwrite.send_messages = False
@@ -402,7 +402,7 @@ class Moderation(commands.Cog):
     # ── /unlock ───────────────────────────────────────────────────────────────
 
     @app_commands.command(name="unlock", description="Unlock this channel")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def unlock(self, interaction: discord.Interaction):
         overwrite = interaction.channel.overwrites_for(interaction.guild.default_role)
         overwrite.send_messages = None  # Reset to default (inherit)
@@ -428,7 +428,7 @@ class Moderation(commands.Cog):
 
     @app_commands.command(name="slowmode", description="Set slowmode delay for this channel")
     @app_commands.describe(seconds="Delay in seconds (0 to disable, max 21600)")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def slowmode(self, interaction: discord.Interaction, seconds: app_commands.Range[int, 0, 21600]):
         await interaction.channel.edit(slowmode_delay=seconds)
         msg = "✅ Slowmode disabled." if seconds == 0 else f"✅ Slowmode set to **{seconds}s**."

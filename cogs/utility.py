@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 from config import (
     has_any_role,
-    OWNER_ROLE_ID, HEAD_ADMIN_ROLE_ID, ADMIN_ROLE_ID, STAFF_ROLE_ID, HELPER_ROLE_ID,
+    OWNER_ROLE_ID, MANAGER_ROLE_ID, HEAD_ADMIN_ROLE_ID, STAFF_ROLE_ID, HELPER_ROLE_ID,
     STAFF_RANK_ORDER, STAFF_RANK_NAMES,
     REPORT_DESCRIPTION, SUPPORT_COLOUR,FAQ_DESCRIPTION,
     RANK_CHANGES_CHANNEL_ID, RANK_CHANGES_CHANNEL_NAME,
@@ -107,7 +107,7 @@ class Utility(commands.Cog):
         member="The member to give the role to",
         role="The role to give the member",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def rolegive(
         self,
         interaction: discord.Interaction,
@@ -129,7 +129,7 @@ class Utility(commands.Cog):
         member="The member to remove the role from",
         role="The role to remove from the member",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def rolegive(
         self,
         interaction: discord.Interaction,
@@ -151,7 +151,7 @@ class Utility(commands.Cog):
         member="The staff member to promote",
         reason="Reason for the promotion (shown in the announcement)",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def promote(
         self,
         interaction: discord.Interaction,
@@ -254,7 +254,7 @@ class Utility(commands.Cog):
         member="The staff member to demote",
         reason="Reason for the demotion (shown in the announcement)",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def demote(
         self,
         interaction: discord.Interaction,

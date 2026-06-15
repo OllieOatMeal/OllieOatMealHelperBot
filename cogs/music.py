@@ -27,7 +27,7 @@ import discord
 import yt_dlp
 from discord import app_commands
 from discord.ext import commands
-from config import STAFF_ROLE_ID, TRAINEE_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+from config import STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID
 from cogs.blacklist import is_blacklisted
 
 FFMPEG_PATH  = os.getenv("FFMPEG_PATH", "ffmpeg")
@@ -37,9 +37,9 @@ EMBED_COLOUR = 0x5865F2
 MUSIC_ROLE_IDS = (
     1117193408105164902,
     STAFF_ROLE_ID,
-    TRAINEE_ROLE_ID,
     ADMIN_ROLE_ID,
     HEAD_ADMIN_ROLE_ID,
+    MANAGER_ROLE_ID,
     OWNER_ROLE_ID,
 )
 

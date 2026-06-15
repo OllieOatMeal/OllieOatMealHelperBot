@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from datetime import datetime, timezone
-from config import has_any_role, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID
+from config import has_any_role, MANAGER_ROLE_ID, OWNER_ROLE_ID
 
 
 def parse_colour(colour_str: str) -> int:
@@ -102,7 +102,7 @@ class Embeds(commands.Cog):
         thumbnail="Optional thumbnail URL", image="Optional image URL",
         ping_role="Optional role to ping alongside the embed",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def embed_simple(
         self,
         interaction: discord.Interaction,
@@ -124,13 +124,13 @@ class Embeds(commands.Cog):
 
     @embed_group.command(name="builder", description="Open an interactive embed builder")
     @app_commands.describe(channel="Channel to send the finished embed to")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def embed_builder(self, interaction: discord.Interaction, channel: discord.TextChannel):
         await interaction.response.send_modal(EmbedBuilderModal(channel))
 
     @embed_group.command(name="announce", description="Send a pre-styled announcement embed")
     @app_commands.describe(channel="Channel to announce in", title="Announcement title", message="Announcement body", ping_role="Role to ping (optional)")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def embed_announce(
         self,
         interaction: discord.Interaction,
@@ -152,7 +152,7 @@ class Embeds(commands.Cog):
         rules="Rules separated by | (e.g. Be respectful|No spam|No NSFW)",
         footer="Optional footer text",
     )
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def embed_rules(
         self,
         interaction: discord.Interaction,
@@ -180,7 +180,7 @@ class Embeds(commands.Cog):
 
     @embed_group.command(name="edit", description="Edit an existing embed sent by this bot")
     @app_commands.describe(channel="Channel containing the message", message_id="ID of the message to edit")
-    @has_any_role(HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def embed_edit(self, interaction: discord.Interaction, channel: discord.TextChannel, message_id: str):
         try:
             mid     = int(message_id)

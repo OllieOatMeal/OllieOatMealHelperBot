@@ -32,7 +32,7 @@ from discord.ext import commands
 from cogs.blacklist import is_blacklisted
 from config import (
     has_any_role,
-    ADMIN_ROLE_ID, STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID,
+    HEAD_ADMIN_ROLE_ID, STAFF_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID,
     MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID
 )
 
@@ -299,7 +299,7 @@ class ApplicationReviewView(discord.ui.View):
         self.applicant = applicant
 
     def _is_staff(self, member: discord.Member) -> bool:
-        allowed = {STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID}
+        allowed = {STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID}
         return bool({r.id for r in member.roles} & allowed)
 
     async def _resolve_applicant(self, guild: discord.Guild) -> discord.Member | None:
@@ -543,7 +543,7 @@ class Applications(commands.Cog):
     # ── /member-application-panel ─────────────────────────────────────────────
 
     @app_commands.command(name="member-application-panel", description="Post the member application panel in this channel")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def member_panel(self, interaction: discord.Interaction):
         apps = get_apps("member")
         if not apps:
@@ -563,7 +563,7 @@ class Applications(commands.Cog):
     # ── /staff-application-panel ──────────────────────────────────────────────
 
     @app_commands.command(name="staff-application-panel", description="Post the staff application panel in this channel")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def staff_panel(self, interaction: discord.Interaction):
         apps = get_apps("staff")
         if not apps:
@@ -584,7 +584,7 @@ class Applications(commands.Cog):
 
     @app_commands.command(name="dm", description="Send a DM to a user via the bot")
     @app_commands.describe(user="The user to DM", message="The message to send")
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def dm_user(self, interaction: discord.Interaction, user: discord.Member, message: str):
         await interaction.response.defer(ephemeral=True)  # ← defer first, DM can be slow
 
@@ -627,7 +627,7 @@ class Applications(commands.Cog):
     )
 
     @app_builder.command(name="list", description="List all configured application types")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_list(self, interaction: discord.Interaction):
         data = _load_apps()
         embed = discord.Embed(title="📋 Application Types", colour=0x5865F2, timestamp=datetime.now(timezone.utc))
@@ -643,13 +643,13 @@ class Applications(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_builder.command(name="create", description="Create a new application type")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_create(self, interaction: discord.Interaction):
         await interaction.response.send_modal(CreateAppModal())
 
     @app_builder.command(name="delete", description="Delete an application type")
     @app_commands.describe(panel='Panel to delete from ("member" or "staff")', app_id="Application ID to delete")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_delete(self, interaction: discord.Interaction, panel: Literal["member", "staff"], app_id: str):
         data = _load_apps()
         apps = data.get(panel, [])
@@ -668,13 +668,13 @@ class Applications(commands.Cog):
         )
 
     @app_builder.command(name="edit-roles", description="Set which roles are assigned when an application is accepted")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_edit_roles(self, interaction: discord.Interaction):
         await interaction.response.send_modal(EditRolesModal())
 
     @app_builder.command(name="open", description="Open an application type so users can submit")
     @app_commands.describe(app_id="Application ID to open (use /app-builder list to see IDs)")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_open(self, interaction: discord.Interaction, app_id: str):
         # Find the app across both panels
         data = _load_apps()
@@ -693,7 +693,7 @@ class Applications(commands.Cog):
 
     @app_builder.command(name="close", description="Close an application type so users cannot submit")
     @app_commands.describe(app_id="Application ID to close (use /app-builder list to see IDs)")
-    @has_any_role(ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_close(self, interaction: discord.Interaction, app_id: str):
         data = _load_apps()
         match = next((a for panel in ("member","staff") for a in data.get(panel,[]) if a["id"] == app_id), None)
@@ -710,7 +710,7 @@ class Applications(commands.Cog):
         )
 
     @app_builder.command(name="status", description="Show open/closed status of all application types")
-    @has_any_role(STAFF_ROLE_ID, ADMIN_ROLE_ID, HEAD_ADMIN_ROLE_ID, OWNER_ROLE_ID)
+    @has_any_role(STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def builder_status(self, interaction: discord.Interaction):
         data = _load_apps()
         embed = discord.Embed(title="📋 Application Status", colour=0x5865F2, timestamp=datetime.now(timezone.utc))
