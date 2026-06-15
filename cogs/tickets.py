@@ -374,7 +374,7 @@ class Tickets(commands.Cog):
         bot.add_view(TicketControlView())
 
     @app_commands.command(name="ticket-panel", description="Post the basic ticket creation panel in this channel")
-    @has_any_role(MANAGER_ROLE_ID)
+    @has_any_role(MANAGER_ROLE_ID, OWNER_ROLE_ID)
     async def ticket_panel(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title="🎫 Support Tickets",
