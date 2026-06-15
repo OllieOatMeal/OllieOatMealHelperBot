@@ -93,12 +93,16 @@ CMD = {
     "embed_rules":              "rules",
     "embed_edit":               "edit",
 
-    # applications
+    # applications (group name + subcommands)
+    # FIX: "application" is the key applications.py uses for the group name;
+    #      "application_builder" is kept as an alias pointing to the same string.
+    "application":              "app-builder",   # used by applications.py group registration
+    "application_builder":      "app-builder",   # legacy alias — same slash-command name
     "member_application_panel": "member-application-panel",
     "staff_application_panel":  "staff-application-panel",
     "dm":                       "dm",
-    "application_builder":              "app-builder",
-    "applications_list":         "list",
+    "application_list":         "list",          # FIX: was "applications_list", key missing
+    "applications_list":        "list",          # legacy alias
     "application_create":       "create",
     "application_delete":       "delete",
     "application_edit_roles":   "edit-roles",
@@ -181,12 +185,14 @@ PERMS = {
     "embed":                    (MANAGER_ROLE_ID, OWNER_ROLE_ID),
 
     # applications
+    # FIX: added "application" and "application_status" keys that applications.py expects
+    "application":              (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "application_status":       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
+    "app_builder":              (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),  # legacy alias
+    "app_builder_status":       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),  # legacy alias
     "member_application_panel": (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
     "staff_application_panel":  (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
     "dm":                       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
-    "app_builder":              (HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
-    # app-builder subcommands that differ from the group default:
-    "app_builder_status":       (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
 
     # blacklist
     "blacklist":                (STAFF_ROLE_ID, HEAD_ADMIN_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID),
@@ -235,7 +241,9 @@ REPORT_LOG_CHANNEL_NAME = "report-logs"
 # ══════════════════════════════════════════════════════════════════════════════
 
 MEMBER_APPLICATION_LOG_CHANNEL_NAME = "application-logs"
-MEMBER_APPLICATION_PING_ROLE_ID     = MANAGER_ROLE_ID, OWNER_ROLE_ID
+# FIX: was `MANAGER_ROLE_ID, OWNER_ROLE_ID` (implicit tuple without parens — confusing).
+#      Now an explicit tuple. _post_application iterates over this directly.
+MEMBER_APPLICATION_PING_ROLE_IDS    = (MANAGER_ROLE_ID, OWNER_ROLE_ID)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SUPPORT COMMAND TEXT

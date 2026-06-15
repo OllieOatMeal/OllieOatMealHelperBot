@@ -33,7 +33,7 @@ from cogs.blacklist import is_blacklisted
 from config import (
     has_any_role, CMD, PERMS,
     HEAD_ADMIN_ROLE_ID, STAFF_ROLE_ID, MANAGER_ROLE_ID, OWNER_ROLE_ID,
-    MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_ID
+    MEMBER_APPLICATION_LOG_CHANNEL_NAME, MEMBER_APPLICATION_PING_ROLE_IDS,  # FIX: renamed import
 )
 
 LEVEL_ROLE_IDS = [
@@ -120,9 +120,6 @@ async def _log_channel(guild: discord.Guild, panel: str) -> discord.TextChannel 
     name = MEMBER_APPLICATION_LOG_CHANNEL_NAME
     return discord.utils.get(guild.text_channels, name=name)
 
-def _ping_role_id(panel: str) -> int:
-    return MEMBER_APPLICATION_PING_ROLE_ID
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Modal
@@ -152,9 +149,16 @@ async def _post_application(interaction: discord.Interaction, app_cfg: dict,
         await interaction.response.send_message("✅ Application submitted! Staff will review it shortly.", ephemeral=True)
         return
 
-    ping_role = interaction.guild.get_role(_ping_role_id(panel))
+    # FIX: MEMBER_APPLICATION_PING_ROLE_IDS is now a proper tuple of IDs;
+    #      build a mention string for every role that actually exists in the guild.
+    mentions = " ".join(
+        r.mention
+        for rid in MEMBER_APPLICATION_PING_ROLE_IDS
+        if (r := interaction.guild.get_role(rid)) is not None
+    )
+
     await log_ch.send(
-        content=ping_role.mention if ping_role else None,
+        content=mentions or None,
         embed=embed,
         view=ApplicationReviewView(app_cfg["label"], app_cfg["id"], panel, applicant),
     )
@@ -301,16 +305,6 @@ class ApplicationReviewView(discord.ui.View):
     def _is_staff(self, member: discord.Member) -> bool:
         allowed = set(PERMS["dm"])
         return bool({r.id for r in member.roles} & allowed)
-
-    async def _resolve_applicant(self, guild: discord.Guild) -> discord.Member | None:
-        if self.applicant and isinstance(self.applicant, discord.Member):
-            return self.applicant
-        # Try to recover from footer if applicant object is stale
-        try:
-            embed = None  # resolved in button handlers
-            return self.applicant
-        except Exception:
-            return None
 
     async def _finalize(self, interaction: discord.Interaction, status: str, colour: int, dm_text: str, assign_roles: bool = False):
         if not self._is_staff(interaction.user):
@@ -586,7 +580,7 @@ class Applications(commands.Cog):
     @app_commands.describe(user="The user to DM", message="The message to send")
     @has_any_role(*PERMS["dm"])
     async def dm_user(self, interaction: discord.Interaction, user: discord.Member, message: str):
-        await interaction.response.defer(ephemeral=True)  # ← defer first, DM can be slow
+        await interaction.response.defer(ephemeral=True)
 
         embed = discord.Embed(
             title=f"📬 Message from {interaction.guild.name}",
@@ -599,8 +593,8 @@ class Applications(commands.Cog):
             embed.set_thumbnail(url=interaction.guild.icon.url)
 
         try:
-            dm_channel = await user.create_dm()   # ← explicitly create/fetch the DM channel
-            await asyncio.sleep(1)                # ← small delay to avoid 40003
+            dm_channel = await user.create_dm()
+            await asyncio.sleep(1)
             await dm_channel.send(embed=embed)
             await interaction.followup.send(
                 embed=discord.Embed(
@@ -620,6 +614,8 @@ class Applications(commands.Cog):
             )
 
     # ── /app-builder ──────────────────────────────────────────────────────────
+    # FIX: group name now uses CMD["application"] which resolves to "app-builder".
+    #      PERMS["application"] is used for all subcommands except "status".
 
     application = app_commands.Group(
         name=CMD["application"],
@@ -676,7 +672,6 @@ class Applications(commands.Cog):
     @app_commands.describe(app_id="Application ID to open (use /app-builder list to see IDs)")
     @has_any_role(*PERMS["application"])
     async def builder_open(self, interaction: discord.Interaction, app_id: str):
-        # Find the app across both panels
         data = _load_apps()
         match = next((a for panel in ("member","staff") for a in data.get(panel,[]) if a["id"] == app_id), None)
         if not match:
@@ -710,7 +705,7 @@ class Applications(commands.Cog):
         )
 
     @application.command(name=CMD["application_status"], description="Show open/closed status of all application types")
-    @has_any_role(*PERMS["application_status"])
+    @has_any_role(*PERMS["application_status"])  # FIX: was PERMS["app_builder_status"] — key now exists
     async def builder_status(self, interaction: discord.Interaction):
         data = _load_apps()
         embed = discord.Embed(title="📋 Application Status", colour=0x5865F2, timestamp=datetime.now(timezone.utc))
