@@ -84,15 +84,6 @@ class OpenTicketView(discord.ui.View):
                 "🚫 You are blacklisted from opening tickets.", ephemeral=True
             )
 
-        existing = discord.utils.find(
-            lambda c: c.name.startswith("ticket-") and str(member.id) in (c.topic or ""),
-            guild.text_channels,
-        )
-        if existing:
-            return await interaction.response.send_message(
-                f"❌ You already have an open ticket: {existing.mention}", ephemeral=True
-            )
-
         await interaction.response.defer(ephemeral=True)
 
         category = discord.utils.get(guild.categories, name=TICKET_CATEGORY_NAME)
