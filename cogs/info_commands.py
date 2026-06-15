@@ -69,7 +69,7 @@ class InfoCommands(commands.Cog):
         embed = discord.Embed(
             title="🏷️ Server Roles",
             description="A breakdown of all roles in the server. Most obtainable roles can be selected in the roles channel!",
-            colour=0x5865F2,
+            colour=0xE74C3C,
             timestamp=datetime.now(timezone.utc),
         )
 
