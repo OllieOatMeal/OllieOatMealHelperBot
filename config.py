@@ -5,6 +5,7 @@ from discord import app_commands
 # ROLE IDs
 # Replace these with the actual role IDs from your Discord server.
 # ══════════════════════════════════════════════════════════════════════════════
+
 ROLES = {
     "OWNER":           1117190277522804826,
     "MANAGER":         1117190624853110925,
@@ -12,21 +13,25 @@ ROLES = {
     "ADMIN":           1117191230485438584,
     "STAFF":           1117193288051601508,
     "TICKET_SUPPORT":  1117196652994904154,
+    "INTERNAL_AFFAIRS":1516194876860006581,
     "HELPER":          1117196806309298246,
-    "MUSIC_DJ":        1117193408105164902,   # role that can use music commands
+    "MUSIC_DJ":        1117193408105164902,
 }
 
 # Shorthand aliases so the rest of the code stays readable
-OWNER_ROLE_ID          = ROLES["OWNER"]
-MANAGER_ROLE_ID        = ROLES["MANAGER"]
-HEAD_ADMIN_ROLE_ID     = ROLES["HEAD_ADMIN"]
-ADMIN_ROLE_ID          = ROLES["ADMIN"]
-STAFF_ROLE_ID          = ROLES["STAFF"]
-TICKET_SUPPORT_ROLE_ID = ROLES["TICKET_SUPPORT"]
-HELPER_ROLE_ID         = ROLES["HELPER"]
-MUSIC_DJ_ROLE_ID       = ROLES["MUSIC_DJ"]
+
+OWNER_ROLE_ID            = ROLES["OWNER"]
+MANAGER_ROLE_ID          = ROLES["MANAGER"]
+HEAD_ADMIN_ROLE_ID       = ROLES["HEAD_ADMIN"]
+ADMIN_ROLE_ID            = ROLES["ADMIN"]
+STAFF_ROLE_ID            = ROLES["STAFF"]
+TICKET_SUPPORT_ROLE_ID   = ROLES["TICKET_SUPPORT"]
+INTERNAL_AFFAIRS_ROLE_ID = ROLES["INTERNAL_AFFAIRS"]
+HELPER_ROLE_ID           = ROLES["HELPER"]
+MUSIC_DJ_ROLE_ID         = ROLES["MUSIC_DJ"]
 
 # Ordered list used for rank comparisons (lowest → highest)
+
 STAFF_RANK_ORDER = [
     HELPER_ROLE_ID,
     STAFF_ROLE_ID,
@@ -37,6 +42,7 @@ STAFF_RANK_ORDER = [
 ]
 
 # Human-readable names matching each role ID above
+
 STAFF_RANK_NAMES = {
     HELPER_ROLE_ID:     "Helper",
     STAFF_ROLE_ID:      "Staff",
@@ -50,6 +56,7 @@ STAFF_RANK_NAMES = {
 # COMMAND NAMES
 # Change any value here to rename a slash command across the whole bot.
 # ══════════════════════════════════════════════════════════════════════════════
+
 CMD = {
     # info_commands
     "post_rules":               "post-rules",
@@ -141,6 +148,7 @@ CMD = {
 # Roles higher in STAFF_RANK_ORDER do NOT automatically inherit lower perms —
 # list every role that should have access.
 # ══════════════════════════════════════════════════════════════════════════════
+
 PERMS = {
     # info_commands
     "post_rules":               (MANAGER_ROLE_ID, OWNER_ROLE_ID),
@@ -202,6 +210,7 @@ PERMS = {
 # ══════════════════════════════════════════════════════════════════════════════
 # LOG CHANNELS
 # ══════════════════════════════════════════════════════════════════════════════
+
 LOG_CHANNEL_NAME    = "logs"
 LOG_CHANNEL_ID      = 1117368916528865413
 
@@ -214,21 +223,24 @@ RANK_CHANGES_CHANNEL_ID   = 1513298605270761592
 # ══════════════════════════════════════════════════════════════════════════════
 # TICKET SYSTEM
 # ══════════════════════════════════════════════════════════════════════════════
+
 TICKET_CATEGORY_NAME    = "🎫| TICKETS"
 TICKET_LOG_CHANNEL_NAME = "ticket-logs"
+
+REPORT_CATAGORY_NAME    = "🎫| TICKETS"
+REPORT_LOG_CHANNEL_NAME = "report-logs"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # APPLICATION SYSTEM
 # ══════════════════════════════════════════════════════════════════════════════
+
 MEMBER_APPLICATION_LOG_CHANNEL_NAME = "application-logs"
 MEMBER_APPLICATION_PING_ROLE_ID     = MANAGER_ROLE_ID, OWNER_ROLE_ID
-
-# STAFF_APPLICATION_LOG_CHANNEL_NAME  = "promotion-applications"
-# STAFF_APPLICATION_PING_ROLE_ID      = OWNER_ROLE_ID
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SUPPORT COMMAND TEXT
 # ══════════════════════════════════════════════════════════════════════════════
+
 FAQ_DESCRIPTION = (
     "Need help? Please review the FAQs:\n\n"
     "📖 **Read the FAQ** <#1199105336750129272> — check our pinned messages for common questions\n\n"
@@ -244,6 +256,7 @@ SUPPORT_COLOUR = 0x5865F2  # Discord blurple
 # ══════════════════════════════════════════════════════════════════════════════
 # REUSABLE ROLE CHECK
 # ══════════════════════════════════════════════════════════════════════════════
+
 def has_any_role(*role_ids: int):
     """
     Slash-command check decorator.
