@@ -454,7 +454,7 @@ class Music(commands.Cog):
             print(f"[music] followup FAILED: {e}")
 
 
-    @app_commands.command(name="panel", description="Re-post the music panel in this channel")
+    @app_commands.command(name="music-panel", description="Re-post the music panel in this channel")
     @music_only()
     async def panel(self, interaction: discord.Interaction):
         print(f"[music] /panel called by {interaction.user}")
