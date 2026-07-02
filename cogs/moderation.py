@@ -105,21 +105,26 @@ class Moderation(commands.Cog):
         reason: str = "No reason provided",
         delete_days: app_commands.Range[int, 0, 7] = 0,
     ):
-        # Prevent banning someone at equal or higher rank
         if member.top_role >= interaction.user.top_role:
             return await interaction.response.send_message(
                 "❌ You cannot ban someone with an equal or higher role.", ephemeral=True
             )
 
-        # Attempt to DM the user before banning (they won't be in the server after)
+        await interaction.response.defer()
+
         try:
             await member.send(
                 f"🔨 You have been **banned** from **{interaction.guild.name}**.\n**Reason:** {reason}"
             )
-        except discord.Forbidden:
-            pass  # User has DMs closed
+        except (discord.Forbidden, discord.HTTPException):
+            pass
 
-        await member.ban(reason=f"{interaction.user} | {reason}", delete_message_days=delete_days)
+        try:
+            await member.ban(reason=f"{interaction.user} | {reason}", delete_message_days=delete_days)
+        except discord.Forbidden:
+            return await interaction.followup.send(
+                "❌ I don't have permission to ban that member.", ephemeral=True
+            )
 
         fields = [
             ("User",      f"{member} (`{member.id}`)", False),
@@ -130,7 +135,7 @@ class Moderation(commands.Cog):
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
         await self.send_mod_log(
             interaction.guild, colour=0x8B0000, title="🔨 Member Banned",
             fields=fields, thumbnail_url=member.display_avatar.url,
@@ -178,14 +183,22 @@ class Moderation(commands.Cog):
                 "❌ You cannot kick someone with an equal or higher role.", ephemeral=True
             )
 
+        # Defer first so we have time for the DM + kick without hitting the 3s interaction timeout
+        await interaction.response.defer()
+
         try:
             await member.send(
                 f"👢 You have been **kicked** from **{interaction.guild.name}**.\n**Reason:** {reason}"
             )
-        except discord.Forbidden:
-            pass
+        except (discord.Forbidden, discord.HTTPException):
+            pass  # DMs off, or rate limited — don't block the kick
 
-        await member.kick(reason=f"{interaction.user} | {reason}")
+        try:
+            await member.kick(reason=f"{interaction.user} | {reason}")
+        except discord.Forbidden:
+            return await interaction.followup.send(
+                "❌ I don't have permission to kick that member.", ephemeral=True
+            )
 
         fields = [
             ("User",      f"{member} (`{member.id}`)", False),
@@ -196,7 +209,7 @@ class Moderation(commands.Cog):
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
         await self.send_mod_log(
             interaction.guild, colour=0xFF6B6B, title="👢 Member Kicked",
             fields=fields, thumbnail_url=member.display_avatar.url,

@@ -276,4 +276,4 @@ def has_any_role(*role_ids: int):
         if not user_role_ids.intersection(role_ids):
             raise app_commands.CheckFailure("You don't have the required role.")
         return True
-    return app_commands.check(predicate)
+    return app_commands.check(predicate)    
